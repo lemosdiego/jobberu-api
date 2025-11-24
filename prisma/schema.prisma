@@ -7,8 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
+// Enum para definir os papéis de usuário.
+// Isso garante que o campo 'tipo' só possa ter os valores 'CLIENTE' ou 'PRESTADOR'.
+enum UserRole {
+  CLIENTE
+  PRESTADOR
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String // Iremos armazenar a senha criptografada aqui
+  telefone  String
+  tipo      UserRole
+
+  // Campos de endereço, como você sugeriu.
+  // O '?' torna o campo opcional.
+  cep         String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  cidade      String?
+  estado      String?
+
+  foto_perfil_url String?
+  data_criacao    DateTime @default(now())
+
+  @@map("usuarios") // Mapeia este modelo para a tabela "usuarios" no banco de dados.
 }

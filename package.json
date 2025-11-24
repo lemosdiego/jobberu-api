@@ -14,8 +14,10 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "install": "^0.13.0",

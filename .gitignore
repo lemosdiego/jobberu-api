@@ -1,2 +1,4 @@
 /node_modules
 /src/generated/prisma
+# Arquivo de variáveis de ambiente - NUNCA ENVIAR PARA O GITHUB
+.env
