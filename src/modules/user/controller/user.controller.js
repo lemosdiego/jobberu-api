@@ -1,4 +1,4 @@
-import prisma from "../lib/prisma.js";
+import prisma from "../../../lib/prisma.js";
 
 export async function createUser(req, res) {
   const { name, email } = req.body;
