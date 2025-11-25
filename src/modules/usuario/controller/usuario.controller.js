@@ -112,9 +112,11 @@ export async function authenticateUser(req, res) {
   }
 }
 
-export async function getUser(req, res) {
+export async function listarUsuarios(req, res) {
   try {
-    const usuario = await prisma.usuario.findMany();
+    const usuario = await prisma.usuario.findMany({
+      include: { servicos_oferecidos: true },
+    });
     return res.status(200).json(usuario);
   } catch (error) {
     return res.status(500).json({ error: "Erro ao buscar usuários" });

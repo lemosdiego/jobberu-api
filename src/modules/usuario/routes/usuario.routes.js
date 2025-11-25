@@ -2,9 +2,9 @@ import { Router } from "express";
 import multer from "multer";
 import multerConfig from "../../../lib/multer.js";
 import {
-  getUser,
   authenticateUser,
   criarUsuario,
+  listarUsuarios,
 } from "../../usuario/controller/usuario.controller.js";
 
 // 1. Cria uma instância do Multer, alimentando-o com nossa configuração.
@@ -15,7 +15,7 @@ const router = Router();
 // - 'upload.single()' diz ao Multer para esperar um único arquivo.
 // - "'foto_perfil'" é o nome do campo que o front-end deve usar para enviar o arquivo.
 router.post("/create", upload.single("foto_perfil"), criarUsuario);
-router.get("/", getUser);
+router.get("/", listarUsuarios);
 router.post("/login", authenticateUser);
 
 export default router;
