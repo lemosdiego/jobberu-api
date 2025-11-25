@@ -4,10 +4,8 @@ import jwt from "jsonwebtoken";
 import carregarNoCloudinary from "../../../lib/cloudinary.js";
 
 export async function criarUsuario(req, res) {
-  //Campos gerais para ambos os tipos de usuário
-  //Desestrutura os campos que serao req.body
+  // Desestrutura campos do req.body
   const {
-    //Campos para ("CLIENTE" e "PRESTADOR")
     nome,
     email,
     senha,
@@ -16,41 +14,35 @@ export async function criarUsuario(req, res) {
     cep,
     cidade,
     estado,
-    //Campos adicionais para profissionais("PRESTADOR")
     titulo_profissional,
     biografia,
     anos_experiencia,
     links_redes_sociais,
   } = req.body;
 
-  //Arquivo da foto de perfil enviado que sera um req.file
   const fotoPerfilFile = req.file;
 
   try {
-    //criptografar a senha antes de salvar
+    // Criptografar a senha
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    //variavel para armazenar a url da foto de perfil
+    // URL da foto (se enviada)
     let fotoPerfilUrl = null;
-
-    //logica para carregar a foto de perfil no cloudinary se o arquivo existir
-
     if (fotoPerfilFile) {
       try {
-        //chama a funcao de carregar no cloudinary passando o caminho do arquivo e a pasta de destino
         fotoPerfilUrl = await carregarNoCloudinary(
           fotoPerfilFile.path,
           "fotos_perfil_usuarios"
         );
       } catch (erro) {
-        // Se ocorrer um erro ao carregar a foto, retorna um erro 500
         console.error("Erro ao carregar foto de perfil:", erro);
         return res
           .status(500)
           .json({ error: "Erro ao carregar foto de perfil" });
       }
     }
-    //montar o objeto de dados do usuario para salvar no banco
+
+    // Montar objeto de cadastro
     const dadosUsuario = {
       nome,
       email,
@@ -62,28 +54,38 @@ export async function criarUsuario(req, res) {
       estado,
       foto_perfil_url: fotoPerfilUrl,
     };
-    //se o tipo for "PRESTADOR" adiciona os campos especificos
+
+    // Campos específicos de prestador
     if (tipo === "PRESTADOR") {
       if (titulo_profissional !== undefined)
         dadosUsuario.titulo_profissional = titulo_profissional;
       if (biografia !== undefined) dadosUsuario.biografia = biografia;
-      if (anos_experiencia !== undefined) {
-        // Converte a string recebida do form-data para um número inteiro.
+      if (anos_experiencia !== undefined)
         dadosUsuario.anos_experiencia = parseInt(anos_experiencia, 10);
+
+      // Tratamento do array de links
+      if (links_redes_sociais !== undefined) {
+        // Se vier como string do form-data (ex: JSON.stringify do frontend)
+        if (typeof links_redes_sociais === "string") {
+          try {
+            dadosUsuario.links_redes_sociais = JSON.parse(links_redes_sociais);
+          } catch {
+            dadosUsuario.links_redes_sociais = [];
+          }
+        } else {
+          dadosUsuario.links_redes_sociais = links_redes_sociais;
+        }
       }
-      if (links_redes_sociais !== undefined)
-        dadosUsuario.links_redes_sociais = links_redes_sociais;
     }
 
-    //Cria o usuario no banco de dados
+    // Cria usuário no Prisma
     const usuario = await prisma.usuario.create({ data: dadosUsuario });
 
-    //remover a senha do objeto retornado
+    // Remove a senha do objeto retornado
     const { senha: _, ...usuarioSemSenha } = usuario;
     return res.status(201).json(usuarioSemSenha);
   } catch (error) {
     console.error("Erro ao criar usuário:", error);
-    // Caso contrário, retorna um erro genérico
     return res.status(500).json({ error: "Erro ao criar usuário" });
   }
 }
@@ -105,7 +107,9 @@ export async function authenticateUser(req, res) {
     const token = jwt.sign({ userId: usuario.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    return res.status(200).json({ token });
+    // Remover a senha do objeto retornado
+    const { senha: _, ...usuarioSemSenha } = usuario;
+    return res.status(200).json({ token, usuario: usuarioSemSenha });
   } catch (error) {
     console.error("Erro de autenticação:", error);
     res.status(500).json({ error: "Erro no servidor" });
@@ -120,5 +124,26 @@ export async function listarUsuarios(req, res) {
     return res.status(200).json(usuario);
   } catch (error) {
     return res.status(500).json({ error: "Erro ao buscar usuários" });
+  }
+}
+
+export async function listaUsuarioId(request, response) {
+  const { id } = request.params;
+  try {
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: parseInt(id, 10) },
+      include: { servicos_oferecidos: true },
+    });
+    // Retorna apenas profissionais
+    if (!usuario || usuario.tipo !== "PRESTADOR") {
+      return response
+        .status(404)
+        .json({ error: "Profissional não encontrado" });
+    }
+    // Remova o campo senha
+    const { senha, ...publico } = usuario;
+    return response.status(200).json(publico);
+  } catch (error) {
+    return response.status(500).json({ error: "Erro ao buscar profissional" });
   }
 }

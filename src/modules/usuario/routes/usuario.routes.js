@@ -5,6 +5,7 @@ import {
   authenticateUser,
   criarUsuario,
   listarUsuarios,
+  listaUsuarioId,
 } from "../../usuario/controller/usuario.controller.js";
 
 // 1. Cria uma instância do Multer, alimentando-o com nossa configuração.
@@ -17,5 +18,6 @@ const router = Router();
 router.post("/create", upload.single("foto_perfil"), criarUsuario);
 router.get("/", listarUsuarios);
 router.post("/login", authenticateUser);
+router.get("/:id", listaUsuarioId);
 
 export default router;
