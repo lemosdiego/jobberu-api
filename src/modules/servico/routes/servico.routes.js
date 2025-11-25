@@ -1,0 +1,20 @@
+import { Router } from "express";
+import multer from "multer";
+import multerConfig from "../../../lib/multer.js";
+import {
+  criarServico,
+  listarServiços,
+} from "../controller/servico.controller.js";
+import autenticacao from "../../../middlewares/autenticacao.js";
+
+const upload = multer(multerConfig);
+const router = Router();
+
+router.post(
+  "/create",
+  autenticacao,
+  upload.array("imagens_servico", 5),
+  criarServico
+);
+router.get("/", listarServiços);
+export default router;
