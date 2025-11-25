@@ -35,5 +35,56 @@ model Usuario {
   foto_perfil_url String?
   data_criacao    DateTime @default(now())
 
+  // --- CAMPOS PARA PERFIL PÚBLICO DO PRESTADOR ---
+  titulo_profissional String?
+  biografia           String?     @db.Text // Usar @db.Text para textos longos é uma boa prática
+  anos_experiencia    Int?
+  links_redes_sociais String[]
+
+  // --- RELACIONAMENTOS ---
+  // Um usuário (prestador) pode ter vários serviços oferecidos.
+  servicos_oferecidos Servico[]   @relation("PrestadorServicos")
+
+  // Um usuário (prestador) pode receber várias avaliações.
+  avaliacoes_recebidas Avaliacao[] @relation("PrestadorAvaliado")
+
+  // Um usuário (cliente) pode fazer várias avaliações.
+  avaliacoes_feitas    Avaliacao[] @relation("ClienteAvaliador")
+
   @@map("usuarios") // Mapeia este modelo para a tabela "usuarios" no banco de dados.
+}
+
+model Servico {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  descricao String   @db.Text
+  categoria String
+  preco     Decimal? @db.Decimal(10, 2) // Define precisão para valores monetários
+  imagens   String[]
+
+  data_criacao     DateTime @default(now())
+  data_atualizacao DateTime @updatedAt
+
+  // Relacionamento: Este serviço pertence a um prestador.
+  prestador   Usuario @relation("PrestadorServicos", fields: [prestadorId], references: [id])
+  prestadorId Int
+
+  @@map("servicos")
+}
+
+model Avaliacao {
+  id           Int      @id @default(autoincrement())
+  nota         Int // Ex: 1 a 5
+  comentario   String?  @db.Text
+  data_criacao DateTime @default(now())
+
+  // Relacionamento: A avaliação é sobre um prestador.
+  prestador   Usuario @relation("PrestadorAvaliado", fields: [prestadorId], references: [id])
+  prestadorId Int
+
+  // Relacionamento: A avaliação foi feita por um cliente.
+  cliente   Usuario @relation("ClienteAvaliador", fields: [clienteId], references: [id])
+  clienteId Int
+
+  @@map("avaliacoes")
 }

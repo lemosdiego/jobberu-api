@@ -3,7 +3,7 @@ import {
   createUser,
   getUser,
   authenticateUser,
-} from "../../user/controller/user.controller.js";
+} from "../../usuario/controller/user.controller.js";
 
 const router = Router();
 router.post("/create", createUser);
