@@ -89,7 +89,7 @@ O prefixo para todas as rotas de usuário é `/usuario` e para serviços é `/se
 
 #### `POST /usuario/create`
 
-- **Descrição:** Cria um novo usuário (Cliente ou Prestador).
+- **Descrição:** Cria um novo usuário, que pode ser do tipo `CLIENTE` ou `PRESTADOR`.
 - **Autenticação:** Pública.
 - **Tipo de Corpo:** `multipart/form-data` (devido ao upload de imagem).
 - **Campos do Corpo:**
@@ -125,13 +125,26 @@ O prefixo para todas as rotas de usuário é `/usuario` e para serviços é `/se
 
 #### `GET /usuario/:id`
 
-- **Descrição:** Busca um usuário específico do tipo `PRESTADOR` pelo seu ID.
+- **Descrição:** Busca o perfil público de um usuário do tipo `PRESTADOR`.
 - **Autenticação:** Pública.
 
 #### `GET /usuario/:id/servicos`
 
 - **Descrição:** Lista todos os serviços oferecidos por um prestador específico.
 - **Autenticação:** Pública.
+
+#### `PATCH /usuario/atualizar/:id`
+
+- **Descrição:** Permite que um usuário autenticado edite seu próprio perfil.
+- **Autenticação:** Protegida (requer token JWT). O `id` na URL deve ser o mesmo do usuário dono do token.
+- **Tipo de Corpo:** `multipart/form-data`.
+- **Campos do Corpo:** Qualquer campo do usuário que possa ser editado (ex: `nome`, `telefone`, `biografia`, `foto_perfil`).
+
+#### `DELETE /usuario/excluir/:id`
+
+- **Descrição:** Permite que um usuário autenticado delete sua própria conta.
+- **Autenticação:** Protegida (requer token JWT). O `id` na URL deve ser o mesmo do usuário dono do token.
+- **Tipo de Corpo:** Nenhum.
 
 ---
 
@@ -159,6 +172,44 @@ O prefixo para todas as rotas de usuário é `/usuario` e para serviços é `/se
 - **Descrição:** Busca um serviço específico pelo seu ID, incluindo informações públicas do prestador.
 - **Autenticação:** Pública.
 
+#### `PATCH /servico/atualizar/:id`
+
+- **Descrição:** Permite que um prestador autenticado edite um de seus próprios serviços.
+- **Autenticação:** Protegida (requer token JWT).
+- **Tipo de Corpo:** `application/json`.
+- **Campos do Corpo:** Qualquer campo do serviço que possa ser editado (ex: `titulo`, `descricao`, `preco`).
+
+#### `DELETE /servico/excluir/:id`
+
+- **Descrição:** Permite que um prestador autenticado delete um de seus próprios serviços.
+- **Autenticação:** Protegida (requer token JWT).
+- **Tipo de Corpo:** Nenhum.
+
+---
+
+### Módulo de Avaliação (`/avaliacao`)
+
+#### `POST /avaliacao/create/:prestadorId`
+
+- **Descrição:** Cria uma nova avaliação para um prestador. Apenas usuários do tipo `CLIENTE` podem avaliar.
+- **Autenticação:** Protegida (requer token JWT).
+- **Tipo de Corpo:** `application/json`.
+- **Campos do Corpo:**
+  - `nota` (Int, Obrigatório) - Ex: 1 a 5.
+  - `comentario` (String, Opcional).
+
+#### `PATCH /avaliacao/:id`
+
+- **Descrição:** Permite que um cliente edite uma avaliação que ele mesmo criou.
+- **Autenticação:** Protegida (requer token JWT).
+- **Tipo de Corpo:** `application/json`.
+
+#### `DELETE /avaliacao/:id`
+
+- **Descrição:** Permite que um cliente delete uma avaliação que ele mesmo criou.
+- **Autenticação:** Protegida (requer token JWT).
+- **Tipo de Corpo:** Nenhum.
+
 ---
 
 ## Estrutura do Projeto
@@ -175,6 +226,9 @@ api-jobberu/
 │       │   ├── controller/
 │       │   └── routes/
 │       └── servico/
+│           ├── controller/
+│           └── routes/
+│       └── avaliacao/
 │           ├── controller/
 │           └── routes/
 ├── .env                   # Variáveis de ambiente (local)
