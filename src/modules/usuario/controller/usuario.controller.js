@@ -147,3 +147,26 @@ export async function listaUsuarioId(request, response) {
     return response.status(500).json({ error: "Erro ao buscar profissional" });
   }
 }
+
+export async function listarServicosDoPrestador(request, response) {
+  try {
+    // 1. Pega o ID do prestador vindo dos parâmetros da URL.
+    const { id } = request.params;
+
+    // 2. Converte o ID para um número inteiro para usar na busca.
+    const prestadorId = parseInt(id, 10);
+
+    // 3. Busca na tabela de serviços todos que correspondem ao prestadorId.
+    const servicos = await prisma.servico.findMany({
+      where: {
+        prestadorId: prestadorId,
+      },
+    });
+
+    // 4. Retorna a lista de serviços encontrados (pode ser um array vazio).
+    return response.status(200).json(servicos);
+  } catch (error) {
+    console.error("Erro ao listar serviços do prestador:", error);
+    return response.status(500).json({ error: "Erro ao buscar os serviços." });
+  }
+}

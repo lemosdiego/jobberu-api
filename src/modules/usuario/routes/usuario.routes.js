@@ -6,6 +6,7 @@ import {
   criarUsuario,
   listarUsuarios,
   listaUsuarioId,
+  listarServicosDoPrestador,
 } from "../../usuario/controller/usuario.controller.js";
 
 // 1. Cria uma instância do Multer, alimentando-o com nossa configuração.
@@ -19,5 +20,8 @@ router.post("/create", upload.single("foto_perfil"), criarUsuario);
 router.get("/", listarUsuarios);
 router.post("/login", authenticateUser);
 router.get("/:id", listaUsuarioId);
+
+// Rota para listar todos os serviços de um prestador específico
+router.get("/:id/servicos", listarServicosDoPrestador);
 
 export default router;

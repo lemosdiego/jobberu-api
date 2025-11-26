@@ -47,12 +47,38 @@ export async function criarServico(request, response) {
     return response.status(500).json({ mensagem: "Erro ao criar serviço" });
   }
 }
-export async function listarServiços(request, response) {
+export async function listarServicos(request, response) {
   try {
     const servicos = await prisma.servico.findMany();
     return response.status(200).json(servicos);
   } catch (erro) {
     console.error("Erro ao listar serviços:", erro);
     return response.status(500).json({ mensagem: "Erro ao listar serviços" });
+  }
+}
+export async function listarServicoId(request, response) {
+  try {
+    const { id } = request.params;
+    const servico = await prisma.servico.findUnique({
+      where: { id: parseInt(id, 10) },
+      include: {
+        prestador: {
+          select: {
+            id: true,
+            nome: true,
+            foto_perfil_url: true,
+            tipo: true,
+            // outros campos públicos do prestador que queira expor
+          },
+        },
+      },
+    });
+    if (!servico) {
+      return response.status(404).json({ mensagem: "Serviço não encontrado" });
+    }
+    return response.status(200).json(servico);
+  } catch (erro) {
+    console.error("Erro ao listar serviço:", erro);
+    return response.status(500).json({ mensagem: "Erro ao listar serviço" });
   }
 }

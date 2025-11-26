@@ -3,7 +3,7 @@ import multer from "multer";
 import multerConfig from "../../../lib/multer.js";
 import {
   criarServico,
-  listarServiços,
+  listarServicos,
 } from "../controller/servico.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 
@@ -16,5 +16,5 @@ router.post(
   upload.array("imagens_servico", 5),
   criarServico
 );
-router.get("/", listarServiços);
+router.get("/", listarServicos);
 export default router;
