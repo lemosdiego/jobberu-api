@@ -4,6 +4,8 @@ import multerConfig from "../../../lib/multer.js";
 import {
   criarServico,
   listarServicos,
+  editarServico,
+  deletarServico,
 } from "../controller/servico.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 
@@ -17,4 +19,6 @@ router.post(
   criarServico
 );
 router.get("/", listarServicos);
+router.patch("/atualizar/:id", autenticacao, editarServico);
+router.delete("/excluir/:id", autenticacao, deletarServico);
 export default router;
