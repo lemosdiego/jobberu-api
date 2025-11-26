@@ -67,7 +67,6 @@ export async function listarServicoId(request, response) {
             id: true,
             nome: true,
             foto_perfil_url: true,
-            tipo: true,
             // outros campos públicos do prestador que queira expor
           },
         },

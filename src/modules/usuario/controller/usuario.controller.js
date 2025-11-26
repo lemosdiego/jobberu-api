@@ -19,7 +19,6 @@ export async function criarUsuario(req, res) {
     anos_experiencia,
     links_redes_sociais,
   } = req.body;
-
   const fotoPerfilFile = req.file;
 
   try {
@@ -29,17 +28,10 @@ export async function criarUsuario(req, res) {
     // URL da foto (se enviada)
     let fotoPerfilUrl = null;
     if (fotoPerfilFile) {
-      try {
-        fotoPerfilUrl = await carregarNoCloudinary(
-          fotoPerfilFile.path,
-          "fotos_perfil_usuarios"
-        );
-      } catch (erro) {
-        console.error("Erro ao carregar foto de perfil:", erro);
-        return res
-          .status(500)
-          .json({ error: "Erro ao carregar foto de perfil" });
-      }
+      fotoPerfilUrl = await carregarNoCloudinary(
+        fotoPerfilFile.path,
+        "fotos_perfil_usuarios"
+      );
     }
 
     // Montar objeto de cadastro
@@ -62,19 +54,10 @@ export async function criarUsuario(req, res) {
       if (biografia !== undefined) dadosUsuario.biografia = biografia;
       if (anos_experiencia !== undefined)
         dadosUsuario.anos_experiencia = parseInt(anos_experiencia, 10);
-
-      // Tratamento do array de links
       if (links_redes_sociais !== undefined) {
-        // Se vier como string do form-data (ex: JSON.stringify do frontend)
-        if (typeof links_redes_sociais === "string") {
-          try {
-            dadosUsuario.links_redes_sociais = JSON.parse(links_redes_sociais);
-          } catch {
-            dadosUsuario.links_redes_sociais = [];
-          }
-        } else {
-          dadosUsuario.links_redes_sociais = links_redes_sociais;
-        }
+        dadosUsuario.links_redes_sociais = Array.isArray(links_redes_sociais)
+          ? links_redes_sociais
+          : [links_redes_sociais];
       }
     }
 
@@ -132,7 +115,10 @@ export async function listaUsuarioId(request, response) {
   try {
     const usuario = await prisma.usuario.findUnique({
       where: { id: parseInt(id, 10) },
-      include: { servicos_oferecidos: true },
+      include: {
+        servicos_oferecidos: true,
+        avaliacoes_recebidas: true, // Garanta que esta linha esteja aqui
+      },
     });
     // Retorna apenas profissionais
     if (!usuario || usuario.tipo !== "PRESTADOR") {
@@ -178,11 +164,9 @@ export async function editarUsuario(request, response) {
 
     // 1. REGRA DE SEGURANÇA: O usuário só pode editar a si mesmo.
     if (usuarioIdParams !== usuarioIdToken) {
-      return response
-        .status(403)
-        .json({
-          mensagem: "Acesso negado. Você só pode editar seu próprio perfil.",
-        });
+      return response.status(403).json({
+        mensagem: "Acesso negado. Você só pode editar seu próprio perfil.",
+      });
     }
 
     const novosDados = request.body;
@@ -223,11 +207,9 @@ export async function deletarUsuario(request, response) {
 
     // 1. REGRA DE SEGURANÇA: O usuário só pode deletar a si mesmo.
     if (usuarioIdParams !== usuarioIdToken) {
-      return response
-        .status(403)
-        .json({
-          mensagem: "Acesso negado. Você só pode deletar seu próprio perfil.",
-        });
+      return response.status(403).json({
+        mensagem: "Acesso negado. Você só pode deletar seu próprio perfil.",
+      });
     }
 
     // 2. Deleta o usuário. O Prisma cuidará de deletar os serviços em cascata.
