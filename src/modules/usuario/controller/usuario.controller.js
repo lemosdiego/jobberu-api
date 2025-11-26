@@ -170,3 +170,74 @@ export async function listarServicosDoPrestador(request, response) {
     return response.status(500).json({ error: "Erro ao buscar os serviços." });
   }
 }
+
+export async function editarUsuario(request, response) {
+  try {
+    const usuarioIdParams = parseInt(request.params.id, 10);
+    const usuarioIdToken = request.usuario.id;
+
+    // 1. REGRA DE SEGURANÇA: O usuário só pode editar a si mesmo.
+    if (usuarioIdParams !== usuarioIdToken) {
+      return response
+        .status(403)
+        .json({
+          mensagem: "Acesso negado. Você só pode editar seu próprio perfil.",
+        });
+    }
+
+    const novosDados = request.body;
+    const fotoPerfilFile = request.file;
+
+    // 2. Se uma nova foto de perfil for enviada, faz o upload.
+    if (fotoPerfilFile) {
+      const fotoPerfilUrl = await carregarNoCloudinary(
+        fotoPerfilFile.path,
+        "fotos_perfil_usuarios"
+      );
+      novosDados.foto_perfil_url = fotoPerfilUrl;
+    }
+
+    // 3. Se uma nova senha for enviada, criptografa.
+    if (novosDados.senha) {
+      novosDados.senha = await bcrypt.hash(novosDados.senha, 10);
+    }
+
+    // 4. Atualiza o usuário no banco.
+    const usuarioAtualizado = await prisma.usuario.update({
+      where: { id: usuarioIdToken },
+      data: novosDados,
+    });
+
+    const { senha: _, ...usuarioSemSenha } = usuarioAtualizado;
+    return response.status(200).json(usuarioSemSenha);
+  } catch (error) {
+    console.error("Erro ao editar usuário:", error);
+    return response.status(500).json({ error: "Erro ao editar usuário" });
+  }
+}
+
+export async function deletarUsuario(request, response) {
+  try {
+    const usuarioIdParams = parseInt(request.params.id, 10);
+    const usuarioIdToken = request.usuario.id;
+
+    // 1. REGRA DE SEGURANÇA: O usuário só pode deletar a si mesmo.
+    if (usuarioIdParams !== usuarioIdToken) {
+      return response
+        .status(403)
+        .json({
+          mensagem: "Acesso negado. Você só pode deletar seu próprio perfil.",
+        });
+    }
+
+    // 2. Deleta o usuário. O Prisma cuidará de deletar os serviços em cascata.
+    await prisma.usuario.delete({
+      where: { id: usuarioIdToken },
+    });
+
+    return response.status(204).send();
+  } catch (error) {
+    console.error("Erro ao deletar usuário:", error);
+    return response.status(500).json({ error: "Erro ao deletar usuário" });
+  }
+}

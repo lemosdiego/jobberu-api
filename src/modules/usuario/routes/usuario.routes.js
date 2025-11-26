@@ -6,8 +6,11 @@ import {
   criarUsuario,
   listarUsuarios,
   listaUsuarioId,
+  editarUsuario,
+  deletarUsuario,
   listarServicosDoPrestador,
 } from "../../usuario/controller/usuario.controller.js";
+import autenticacao from "../../../middlewares/autenticacao.js";
 
 // 1. Cria uma instância do Multer, alimentando-o com nossa configuração.
 const upload = multer(multerConfig);
@@ -23,5 +26,16 @@ router.get("/:id", listaUsuarioId);
 
 // Rota para listar todos os serviços de um prestador específico
 router.get("/:id/servicos", listarServicosDoPrestador);
+
+// Rota para editar um usuário (requer autenticação)
+router.patch(
+  "/atualizar/:id",
+  autenticacao,
+  upload.single("foto_perfil"),
+  editarUsuario
+);
+
+// Rota para deletar um usuário (requer autenticação)
+router.delete("/excluir/:id", autenticacao, deletarUsuario);
 
 export default router;
