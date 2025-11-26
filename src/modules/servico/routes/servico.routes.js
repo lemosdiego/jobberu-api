@@ -5,6 +5,7 @@ import {
   criarServico,
   listarServicos,
   editarServico,
+  listarServicoId,
   deletarServico,
 } from "../controller/servico.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
@@ -19,6 +20,7 @@ router.post(
   criarServico
 );
 router.get("/", listarServicos);
+router.get("/:id", listarServicoId); // Rota para buscar um serviço específico
 router.patch("/atualizar/:id", autenticacao, editarServico);
 router.delete("/excluir/:id", autenticacao, deletarServico);
 export default router;
