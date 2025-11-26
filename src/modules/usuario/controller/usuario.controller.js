@@ -102,7 +102,10 @@ export async function authenticateUser(req, res) {
 export async function listarUsuarios(req, res) {
   try {
     const usuario = await prisma.usuario.findMany({
-      include: { servicos_oferecidos: true },
+      include: {
+        servicos_oferecidos: true,
+        avaliacoes_recebidas: true, // Adicione esta linha
+      },
     });
     return res.status(200).json(usuario);
   } catch (error) {
@@ -154,6 +157,32 @@ export async function listarServicosDoPrestador(request, response) {
   } catch (error) {
     console.error("Erro ao listar serviços do prestador:", error);
     return response.status(500).json({ error: "Erro ao buscar os serviços." });
+  }
+}
+
+export async function listarMinhasAvaliacoes(request, response) {
+  try {
+    const clienteId = request.usuario.id;
+
+    const avaliacoesFeitas = await prisma.avaliacao.findMany({
+      where: {
+        clienteId: clienteId,
+      },
+      include: {
+        prestador: {
+          select: {
+            id: true,
+            nome: true,
+            foto_perfil_url: true,
+          },
+        },
+      },
+    });
+
+    return response.status(200).json(avaliacoesFeitas);
+  } catch (error) {
+    console.error("Erro ao listar minhas avaliações:", error);
+    return response.status(500).json({ error: "Erro ao buscar avaliações." });
   }
 }
 

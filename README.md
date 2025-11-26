@@ -146,6 +146,11 @@ O prefixo para todas as rotas de usuário é `/usuario` e para serviços é `/se
 - **Autenticação:** Protegida (requer token JWT). O `id` na URL deve ser o mesmo do usuário dono do token.
 - **Tipo de Corpo:** Nenhum.
 
+#### `GET /usuario/me/avaliacoes`
+
+- **Descrição:** Lista todas as avaliações feitas pelo usuário autenticado.
+- **Autenticação:** Protegida (requer token JWT).
+
 ---
 
 ### Módulo de Serviço (`/servico`)

@@ -9,6 +9,7 @@ import {
   editarUsuario,
   deletarUsuario,
   listarServicosDoPrestador,
+  listarMinhasAvaliacoes,
 } from "../../usuario/controller/usuario.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 
@@ -26,6 +27,9 @@ router.post("/create", upload.single("foto_perfil"), criarUsuario);
 router.post("/login", authenticateUser);
 router.get("/", listarUsuarios);
 router.get("/:id", listaUsuarioId);
+
+// Rota para o usuário logado ver as avaliações que ele fez
+router.get("/me/avaliacoes", autenticacao, listarMinhasAvaliacoes);
 router.get("/:id/servicos", listarServicosDoPrestador);
 router.patch(
   "/atualizar/:id",
