@@ -3,8 +3,8 @@ import prisma from "../../../lib/prisma.js";
 
 export async function criarServico(request, response) {
   try {
-    // Verifica permissão, apenas usuarios do tipo "PRESTADOR" podem criar serviçoa
-    if (request.usuario.tipo !== "PRESTADOR") {
+    // Verifica permissão, apenas usuários que são prestadores podem criar serviços
+    if (!request.usuario.is_prestador) {
       return response
         .status(403)
         .json({ mensagem: "Apenas prestadores podem criar serviços" });
@@ -84,7 +84,7 @@ export async function listarServicoId(request, response) {
 export async function editarServico(request, response) {
   try {
     // Verificação de tipo por segurança
-    if (request.usuario.tipo !== "PRESTADOR") {
+    if (!request.usuario.is_prestador) {
       return response
         .status(403)
         .json({ mensagem: "Apenas prestadores podem editar serviços." });
@@ -122,7 +122,7 @@ export async function editarServico(request, response) {
 export async function deletarServico(request, response) {
   try {
     // verificar tipo por segurança
-    if (request.usuario.tipo !== "PRESTADOR") {
+    if (!request.usuario.is_prestador) {
       return response
         .status(403)
         .json({ mensagem: "Apenas prestadores podem deletar serviços" });

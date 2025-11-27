@@ -2,43 +2,49 @@ import prisma from "../../../lib/prisma.js";
 
 export async function criarAvaliacao(request, response) {
   try {
-    const prestadorId = parseInt(request.params.prestadorId, 10);
+    const { registroId, nota, comentario } = request.body;
     const clienteId = request.usuario.id;
-    const { nota, comentario } = request.body;
 
-    // 1. Verifica se o usuário logado é um CLIENTE
-    if (request.usuario.tipo !== "CLIENTE") {
-      return response
-        .status(403)
-        .json({ mensagem: "Apenas clientes podem fazer avaliações." });
-    }
-
-    // 2. Verifica se o alvo da avaliação existe e é um PRESTADOR
-    const prestador = await prisma.usuario.findUnique({
-      where: { id: prestadorId },
+    const registro = await prisma.registroServico.findUnique({
+      where: { id: registroId },
+      include: { avaliacao: true },
     });
-    if (!prestador || prestador.tipo !== "PRESTADOR") {
-      return response
-        .status(404)
-        .json({ mensagem: "Prestador não encontrado." });
-    }
 
-    // 3. Regra de negócio: Cliente não pode avaliar a si mesmo (embora o tipo já impeça isso, é uma boa dupla verificação)
-    if (clienteId === prestadorId) {
+    //VERIFICA SE O REGISTRO EXISTE
+    if (!registro) {
+      return response.status(404).json({ mensagem: "Registro nao existe" });
+    }
+    //VERIFICA SE O USUARIO LOGADO É O MESMO DO REGISTRO
+    if (registro.clienteId !== clienteId) {
       return response
         .status(403)
-        .json({ mensagem: "Você não pode avaliar a si mesmo." });
+        .json({ mensagem: "Você nao tem permissão para avaliar este erviço" });
+    }
+    //VERIFICA SE O STATUS TÁ CONCLUIDO
+    if (registro.status !== "CONCLUIDO") {
+      return response
+        .status(403)
+        .json({ mensagem: "Esse serviço nao pode ser avaliado" });
+    }
+    //VERIFICA DE JA EXISTE UMA AVALIAÇÃO PARA ESSE REGISTRO, GARANTINDO QUE O MESMO NAO AVALIE DUAS VEZES
+    if (registro.avaliacao) {
+      return response
+        .status(409)
+        .json({ mensagem: "Este serviço ja foi avaliado" });
     }
 
-    // 4. Criar a avaliação (sem a necessidade de vínculo)
+    //PASSANDO AS ETAPAS CRIAREMOS UMA AVALIAÇÃO
+
     const novaAvaliacao = await prisma.avaliacao.create({
       data: {
         nota: parseInt(nota, 10),
         comentario,
-        clienteId,
-        prestadorId,
+        clienteId: clienteId,
+        prestadorId: registro.prestadorId,
+        registroId: registro.id, // CORREÇÃO: Passar o ID do registro, não o objeto inteiro.
       },
     });
+
     return response.status(201).json(novaAvaliacao);
   } catch (error) {
     console.error("Erro ao criar avaliação:", error);

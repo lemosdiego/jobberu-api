@@ -10,7 +10,7 @@ export async function criarUsuario(req, res) {
     email,
     senha,
     telefone,
-    tipo,
+    is_prestador,
     cep,
     cidade,
     estado,
@@ -40,7 +40,7 @@ export async function criarUsuario(req, res) {
       email,
       senha: senhaHash,
       telefone,
-      tipo,
+      is_prestador,
       cep,
       cidade,
       estado,
@@ -48,7 +48,7 @@ export async function criarUsuario(req, res) {
     };
 
     // Campos específicos de prestador
-    if (tipo === "PRESTADOR") {
+    if (is_prestador === true) {
       if (titulo_profissional !== undefined)
         dadosUsuario.titulo_profissional = titulo_profissional;
       if (biografia !== undefined) dadosUsuario.biografia = biografia;
@@ -124,7 +124,7 @@ export async function listaUsuarioId(request, response) {
       },
     });
     // Retorna apenas profissionais
-    if (!usuario || usuario.tipo !== "PRESTADOR") {
+    if (!usuario || usuario.is_prestador === false) {
       return response
         .status(404)
         .json({ error: "Profissional não encontrado" });
