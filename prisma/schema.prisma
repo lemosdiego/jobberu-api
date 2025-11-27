@@ -9,10 +9,12 @@ datasource db {
 
 // Enum para definir os papéis de usuário.
 // Isso garante que o campo 'tipo' só possa ter os valores 'CLIENTE' ou 'PRESTADOR'.
-enum UserRole {
-  CLIENTE
-  PRESTADOR
+enum StatusServico {
+  PENDENTE_CONFIRMACAO_CLIENTE
+  CONCLUIDO
+  RECUSADO
 }
+
 
 model Usuario {
   id        Int      @id @default(autoincrement())
@@ -20,8 +22,7 @@ model Usuario {
   email     String   @unique
   senha     String // Iremos armazenar a senha criptografada aqui
   telefone  String
-  tipo      UserRole
-
+  is_prestador Boolean @default(false)
   // Campos de endereço, como você sugeriu.
   // O '?' torna o campo opcional.
   cep         String?
@@ -34,6 +35,10 @@ model Usuario {
 
   foto_perfil_url String?
   data_criacao    DateTime @default(now())
+
+  // --- CAMPOS DE GAMIFICAÇÃO ---
+  nivel_cliente   String   @default("Bronze")
+  nivel_prestador String   @default("Bronze")
 
   // --- CAMPOS PARA PERFIL PÚBLICO DO PRESTADOR ---
   titulo_profissional String?
@@ -50,6 +55,12 @@ model Usuario {
 
   // Um usuário (cliente) pode fazer várias avaliações.
   avaliacoes_feitas    Avaliacao[] @relation("ClienteAvaliador")
+
+  // Um usuário pode solicitar vários registros de serviço (como prestador)
+  servicos_solicitados RegistroServico[] @relation("PrestadorSolicitante")
+
+  // Um usuário pode receber várias solicitações de serviço (como cliente)
+  servicos_recebidos   RegistroServico[] @relation("ClienteAlvo")
 
   @@map("usuarios") // Mapeia este modelo para a tabela "usuarios" no banco de dados.
 }
@@ -86,5 +97,27 @@ model Avaliacao {
   cliente   Usuario @relation("ClienteAvaliador", fields: [clienteId], references: [id])
   clienteId Int
 
+  // Relacionamento opcional com RegistroServico (para o futuro)
+  registro   RegistroServico? @relation(fields: [registroId], references: [id])
+  registroId Int?             @unique
+
   @@map("avaliacoes")
+}
+
+model RegistroServico {
+  id     Int           @id @default(autoincrement())
+  status StatusServico @default(PENDENTE_CONFIRMACAO_CLIENTE)
+
+  // Relacionamento com o Prestador que solicitou a confirmação
+  prestador   Usuario @relation("PrestadorSolicitante", fields: [prestadorId], references: [id])
+  prestadorId Int
+
+  // Relacionamento com o Cliente que precisa confirmar
+  cliente   Usuario @relation("ClienteAlvo", fields: [clienteId], references: [id])
+  clienteId Int
+
+  // Um registro de serviço pode ter uma avaliação associada
+  avaliacao Avaliacao?
+
+  @@map("registros_servicos")
 }
