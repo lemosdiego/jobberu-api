@@ -59,7 +59,14 @@ export async function criarUsuario(req, res) {
       const respostaNominatim = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           enderecoCompleto
-        )}`
+        )}`,
+        {
+          headers: {
+            // Adicionar um User-Agent é uma exigência da política de uso do Nominatim
+            // para evitar bloqueios por excesso de requisições.
+            "User-Agent": "JobberU App/1.0 (seu-contato@email.com)",
+          },
+        }
       );
       const dadosGeograficos = await respostaNominatim.json();
 
@@ -287,5 +294,30 @@ export async function deletarUsuario(request, response) {
   } catch (error) {
     console.error("Erro ao deletar usuário:", error);
     return response.status(500).json({ error: "Erro ao deletar usuário" });
+  }
+}
+
+export async function listarPrestadoresPorCidade(request, response) {
+  // 1. Pega o nome da cidade da URL (ex: "Santo-Andre")
+  const cidadeDaUrl = request.params.cidade;
+
+  // 2. Formata o nome para corresponder ao formato do banco de dados (ex: "Santo Andre")
+  //    Isso substitui todos os hifens por espaços.
+  const cidadeFormatada = cidadeDaUrl.replace(/-/g, " ");
+
+  try {
+    const prestadores = await prisma.usuario.findMany({
+      where: {
+        cidade: {
+          equals: cidadeFormatada,
+          mode: "insensitive", // Ignora maiúsculas/minúsculas
+        },
+        is_prestador: true,
+      },
+    });
+    return response.status(200).json({ prestadores });
+  } catch (error) {
+    console.error("Erro ao listar prestadores por cidade:", error);
+    return response.status(500).json({ error: "Erro ao buscar prestadores" });
   }
 }

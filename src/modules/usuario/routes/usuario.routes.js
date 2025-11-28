@@ -10,6 +10,7 @@ import {
   deletarUsuario,
   listarServicosDoPrestador,
   listarMinhasAvaliacoes,
+  listarPrestadoresPorCidade,
 } from "../../usuario/controller/usuario.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 
@@ -60,5 +61,10 @@ router.patch(
 //! DELETE /usuario/excluir/:id
 //! (🔒 Autenticado) Deleta o perfil do próprio usuário.
 router.delete("/excluir/:id", autenticacao, deletarUsuario);
+
+//! GET /usuario/prestadores/:cidade
+//! Lista todos os prestadores de uma cidade específica.
+//! Parâmetro: :cidade (nome da cidade).
+router.get("/prestadores/cidade/:cidade", listarPrestadoresPorCidade);
 
 export default router;
