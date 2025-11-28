@@ -165,7 +165,7 @@ O prefixo para todas as rotas de usuário é `/usuario` e para serviços é `/se
   - `descricao` (String, Obrigatório)
   - `categoria` (String, Obrigatório)
   - `preco` (Number, Opcional)
-  - `imagens_servico` (File[], Opcional) - Array de até 5 imagens para o portfólio do serviço.
+  - `imagens_servico` (File[], Opcional) - Array de imagens para o portfólio do serviço.
 
 #### `GET /servico`
 

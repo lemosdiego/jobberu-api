@@ -1,4 +1,5 @@
 import prisma from "../../../lib/prisma.js";
+import { StatusServico } from "@prisma/client";
 
 export async function solicitarConfirmacao(request, response) {
   try {
@@ -33,7 +34,11 @@ export async function solicitarConfirmacao(request, response) {
     }
     //verifica se o prestador existe
     const registroExistente = await prisma.registroServico.findFirst({
-      where: { prestadorId, clienteId, status: "PENDENTE" },
+      where: {
+        prestadorId,
+        clienteId,
+        status: StatusServico.PENDENTE_CONFIRMACAO_CLIENTE,
+      },
     });
     if (registroExistente) {
       return response.status(409).json({
@@ -45,7 +50,7 @@ export async function solicitarConfirmacao(request, response) {
       data: {
         prestadorId,
         clienteId,
-        status: "PENDENTE",
+        status: StatusServico.PENDENTE_CONFIRMACAO_CLIENTE,
       },
     });
     return response.status(201).json(novoRegistro);
@@ -62,7 +67,10 @@ export async function responderSolicitacao(request, response) {
     const { resposta } = request.body; // 'CONCLUIDO' ou 'RECUSADO'
 
     // 2. REGRAS DE NEGÓCIO E SEGURANÇA
-
+    const statusResposta =
+      resposta === "CONCLUIDO"
+        ? StatusServico.CONCLUIDO
+        : StatusServico.RECUSADO;
     // REGRA 2.1: A resposta é válida?
     if (!["CONCLUIDO", "RECUSADO"].includes(resposta)) {
       return response
@@ -83,27 +91,23 @@ export async function responderSolicitacao(request, response) {
 
     // REGRA 2.3: O usuário logado é o cliente correto para esta solicitação?
     if (registro.clienteId !== clienteIdLogado) {
-      return response
-        .status(403)
-        .json({
-          mensagem: "Você não tem permissão para responder a esta solicitação.",
-        });
+      return response.status(403).json({
+        mensagem: "Você não tem permissão para responder a esta solicitação.",
+      });
     }
 
     // REGRA 2.4: A solicitação ainda está pendente?
-    if (registro.status !== "PENDENTE") {
-      return response
-        .status(409)
-        .json({
-          mensagem: `Esta solicitação já foi respondida com o status: ${registro.status}.`,
-        });
+    if (registro.status !== StatusServico.PENDENTE_CONFIRMACAO_CLIENTE) {
+      return response.status(409).json({
+        mensagem: `Esta solicitação já foi respondida com o status: ${registro.status}.`,
+      });
     }
 
     // 3. ATUALIZAÇÃO DO REGISTRO
     const registroAtualizado = await prisma.registroServico.update({
       where: { id: registroId },
       data: {
-        status: resposta, // Atualiza o status com a resposta do cliente
+        status: statusResposta, // Atualiza o status com a resposta do cliente
       },
     });
 

@@ -19,7 +19,11 @@ export async function criarUsuario(req, res) {
     anos_experiencia,
     links_redes_sociais,
   } = req.body;
+
   const fotoPerfilFile = req.file;
+
+  // Converte o valor de 'is_prestador' de string para boolean
+  const isPrestadorBoolean = is_prestador === "true";
 
   try {
     // Criptografar a senha
@@ -40,7 +44,7 @@ export async function criarUsuario(req, res) {
       email,
       senha: senhaHash,
       telefone,
-      is_prestador,
+      is_prestador: isPrestadorBoolean,
       cep,
       cidade,
       estado,
@@ -48,7 +52,7 @@ export async function criarUsuario(req, res) {
     };
 
     // Campos específicos de prestador
-    if (is_prestador === true) {
+    if (isPrestadorBoolean) {
       if (titulo_profissional !== undefined)
         dadosUsuario.titulo_profissional = titulo_profissional;
       if (biografia !== undefined) dadosUsuario.biografia = biografia;
@@ -123,11 +127,9 @@ export async function listaUsuarioId(request, response) {
         avaliacoes_recebidas: true, // Garanta que esta linha esteja aqui
       },
     });
-    // Retorna apenas profissionais
-    if (!usuario || usuario.is_prestador === false) {
-      return response
-        .status(404)
-        .json({ error: "Profissional não encontrado" });
+    // Se nenhum usuário for encontrado com o ID, retorna 404.
+    if (!usuario) {
+      return response.status(404).json({ error: "Usuário não encontrado" });
     }
     // Remova o campo senha
     const { senha, ...publico } = usuario;
