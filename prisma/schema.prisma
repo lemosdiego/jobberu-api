@@ -25,13 +25,15 @@ model Usuario {
   is_prestador Boolean @default(false)
   // Campos de endereço, como você sugeriu.
   // O '?' torna o campo opcional.
-  cep         String?
+  cep         String // Tornamos o CEP obrigatório
   logradouro  String?
   numero      String?
   complemento String?
   bairro      String?
   cidade      String?
   estado      String?
+  latitude    Float?
+  longitude   Float?
 
   foto_perfil_url String?
   data_criacao    DateTime @default(now())

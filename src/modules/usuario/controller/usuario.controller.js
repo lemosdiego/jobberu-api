@@ -26,6 +26,10 @@ export async function criarUsuario(req, res) {
   const isPrestadorBoolean = is_prestador === "true";
 
   try {
+    let dadosEndereco = {};
+    let lat = null;
+    let lon = null;
+
     // Criptografar a senha
     const senhaHash = await bcrypt.hash(senha, 10);
 
@@ -38,6 +42,35 @@ export async function criarUsuario(req, res) {
       );
     }
 
+    // --- ENRIQUECIMENTO DE DADOS GEOGRÁFICOS ---
+    if (cep) {
+      // 1. Busca dados do endereço pelo CEP
+      const respostaViaCep = await fetch(
+        `https://viacep.com.br/ws/${cep}/json/`
+      );
+      dadosEndereco = await respostaViaCep.json();
+
+      if (dadosEndereco.erro) {
+        return res.status(400).json({ error: "CEP inválido" });
+      }
+
+      // 2. Busca coordenadas pelo endereço obtido
+      const enderecoCompleto = `${dadosEndereco.logradouro}, ${dadosEndereco.localidade}, ${dadosEndereco.uf}`;
+      const respostaNominatim = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          enderecoCompleto
+        )}`
+      );
+      const dadosGeograficos = await respostaNominatim.json();
+
+      // 3. Extrai latitude e longitude se encontradas
+      if (dadosGeograficos && dadosGeograficos.length > 0) {
+        // Usamos parseFloat para garantir que o valor seja um número
+        lat = parseFloat(dadosGeograficos[0].lat);
+        lon = parseFloat(dadosGeograficos[0].lon);
+      }
+    }
+
     // Montar objeto de cadastro
     const dadosUsuario = {
       nome,
@@ -46,8 +79,10 @@ export async function criarUsuario(req, res) {
       telefone,
       is_prestador: isPrestadorBoolean,
       cep,
-      cidade,
-      estado,
+      cidade: dadosEndereco.localidade || cidade, // Usa o dado do ViaCEP, ou o original se falhar
+      estado: dadosEndereco.uf || estado, // Usa o dado do ViaCEP, ou o original se falhar
+      latitude: lat,
+      longitude: lon,
       foto_perfil_url: fotoPerfilUrl,
     };
 
