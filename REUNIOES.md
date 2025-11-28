@@ -172,3 +172,78 @@ A arquitetura definida é clara, segura, escalável e alinhada com a estratégia
     - Alterar a rota de criação de avaliação para que ela dependa de um `registroId` com status `CONCLUIDO`, garantindo a segurança do processo.
 
 **Status:** Design da solução concluído. Próximo passo é iniciar a implementação do back-end.
+
+---
+
+## Reunião de Arquitetura e Produto - 28/05/2024
+
+### Participantes
+
+- **Washington Lemos** - Product Owner / Lead Developer
+- **Gemini Code Assist** - Arquiteto de Soluções
+
+### Pauta da Reunião
+
+1.  **Geolocalização e Relevância:** Estratégia para busca inteligente de prestadores.
+2.  **Sistema de Favoritos:** Arquitetura para engajamento e retenção de usuários.
+3.  **Segurança de Acesso (2FA/OTP):** Fortalecimento do login e recuperação de senha.
+4.  **Moderação de Conteúdo e Segurança:** Defesa contra abuso e conteúdo impróprio.
+5.  **Feedback da Plataforma vs. Avaliação de Serviço:** Separação de conceitos e criação de um canal de melhoria de produto.
+
+---
+
+### 1. Geolocalização e Relevância (Prioridade Máxima)
+
+- **Requisito:** Tornar a busca por prestadores relevante, baseando-se na proximidade geográfica do cliente.
+- **Restrição:** A solução inicial deve ter custo zero.
+- **Decisão Arquitetural:**
+  1.  **Enriquecimento de Dados Assíncrono:** O campo `cep` no modelo `Usuario` se tornará obrigatório. No momento do cadastro/edição, a API irá disparar um processo em background para consultar APIs externas e popular os campos `cidade`, `estado`, `latitude` e `longitude` do usuário. Isso garante que a experiência do usuário não seja impactada pela latência de serviços de terceiros.
+  2.  **Provedores de Serviço Gratuitos:** Para manter o custo zero, utilizaremos a API **ViaCEP** para obter dados de endereço e a API **Nominatim (OpenStreetMap)** para a geocodificação (converter CEP/endereço em latitude/longitude). A arquitetura será projetada para permitir a troca futura desses provedores.
+  3.  **Consultas de Proximidade:** A estratégia de longo prazo é utilizar a extensão **PostGIS** no PostgreSQL. Ela permite a execução de consultas geoespaciais nativas e performáticas (ex: "buscar prestadores em um raio de 10km"), que é a única solução escalável para este problema.
+
+### 2. Sistema de Favoritos
+
+- **Requisito:** Permitir que clientes salvem perfis de prestadores para consulta futura.
+- **Decisão Arquitetural:**
+  1.  **Modelo de Dados:** Será criada uma nova tabela de junção `Favorito` para estabelecer uma relação muitos-para-muitos entre usuários (o `clienteId` que favoritou e o `prestadorId` que foi favoritado).
+  2.  **Indexação:** A tabela terá um índice composto `@@unique([clienteId, prestadorId])` para garantir a integridade dos dados e otimizar as consultas.
+  3.  **Endpoints:** Serão criadas rotas específicas para `favoritar`, `desfavoritar` e `listar favoritos`, seguindo as melhores práticas de API REST.
+
+### 3. Segurança de Acesso (2FA/OTP)
+
+- **Requisito:** Implementar um sistema de login seguro e flexível, via código, e um fluxo de recuperação de senha.
+- **Decisão Arquitetural:**
+  1.  **Login Inteligente:** Será criado um endpoint único (`POST /auth/enviar-codigo`) que aceita um `identificador`. A API irá detectar se o identificador é um e-mail ou um número de telefone e acionar o canal de envio correto.
+  2.  **Módulo de Notificação Abstrato:** A lógica de envio será encapsulada em um "Serviço de Notificação", que fará a ponte com APIs externas (ex: SendGrid, Twilio). Isso torna a troca de provedores transparente para a aplicação.
+  3.  **Gerenciamento de OTP:** Os códigos de uso único (OTP) serão armazenados temporariamente com tempo de expiração (5-10 min) e controle de tentativas para prevenir ataques de força bruta.
+  4.  **Recuperação de Senha:** A mesma arquitetura do Serviço de Notificação será reaproveitada para o fluxo de "esqueci minha senha", enviando um link com um token de reset de uso único.
+
+### 4. Moderação de Conteúdo e Segurança da Comunidade
+
+- **Requisito:** Proteger a plataforma contra conteúdo impróprio (texto, imagens) e comportamento malicioso (golpes, spam).
+- **Decisão Arquitetural:**
+  1.  **Moderação Híbrida:**
+      - **Reativa (Custo Zero):** Para o MVP, a moderação será reativa. Será criado um **Módulo de Denúncias**, onde usuários podem reportar perfis, comentários ou serviços. As denúncias serão armazenadas para revisão manual por um administrador. O sistema de denúncias permitirá o upload de imagens como prova.
+      - **Proativa (Futuro):** A arquitetura será preparada para, no futuro, integrar APIs pagas de moderação automática de imagem (ex: add-ons do Cloudinary) e filtros de palavras ofensivas (`profanity filters`).
+  2.  **Prevenção de Abuso (Rate Limiting):** Será implementado um middleware de `rate limiting` (ex: `express-rate-limit`) para limitar o número de requisições por IP/usuário em endpoints críticos (login, envio de mensagens, etc.), como uma medida de segurança de baixo custo e alto impacto.
+
+### 5. Feedback da Plataforma vs. Avaliação de Serviço
+
+- **Requisito:** Criar um canal para usuários enviarem feedback sobre a plataforma JobberU e, ao mesmo tempo, ter uma forma de exibir depoimentos públicos.
+- **Decisão Arquitetural:**
+  1.  **Separação de Conceitos:** Fica definido que existem dois sistemas distintos:
+      - **`Avaliacao` (Existente):** Para avaliar um **serviço/prestador**. É sempre pública e vinculada a um `RegistroServico`.
+      - **`FeedbackPlataforma` (Novo):** Para avaliar a **plataforma JobberU**. É privada por padrão e destinada à equipe de produto.
+  2.  **Modelo `FeedbackPlataforma`:** O novo modelo terá campos para categorização (`tipo: 'BUG', 'SUGESTAO', 'ELOGIO_PLATAFORMA'`) e um campo booleano `aprovado_para_exibicao`.
+  3.  **Endpoint de Depoimentos:** Será criada uma rota pública (`GET /depoimentos`) que buscará apenas os feedbacks do tipo `ELOGIO_PLATAFORMA` que foram manualmente marcados com `aprovado_para_exibicao: true` por um administrador.
+
+---
+
+### Plano de Ação Imediato
+
+1.  **Iniciar o desenvolvimento da Pauta 1 (Geolocalização):**
+    - Alterar o `schema.prisma` para adicionar os campos `latitude` e `longitude` e tornar `cep` obrigatório.
+    - Implementar a lógica de enriquecimento de dados no `usuario.controller.js`.
+    - Pesquisar e documentar a ativação da extensão PostGIS no ambiente de desenvolvimento Docker.
+
+**Status:** Design da solução concluído. Próximo passo é iniciar a implementação da Pauta 1.
