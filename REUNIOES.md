@@ -248,3 +248,66 @@ A arquitetura definida é clara, segura, escalável e alinhada com a estratégia
     - **PENDENTE (Longo Prazo):** Ativação da extensão PostGIS para buscas por raio.
 
 **Status:** Implementação da busca por cidade e enriquecimento de dados concluída. Próximo passo é iniciar a Pauta 2 (Sistema de Favoritos).
+
+---
+
+## Reunião de Alinhamento Estratégico e Foco do MVP - 29/05/2024
+
+### Participantes
+
+- **Washington Lemos** - Product Owner / Lead Developer
+- **Gemini Code Assist** - Arquiteto de Soluções
+
+### Pauta da Reunião
+
+1.  Simplificar a narrativa e a missão do JobberU.
+2.  Revisar o fluxo de usuário do MVP para máxima simplicidade.
+3.  Re-priorizar as tarefas finais para o lançamento.
+4.  Definir um roadmap claro para futuras atualizações (pós-MVP).
+
+---
+
+### 1. Simplificando a Missão do JobberU
+
+A discussão focou em refinar a mensagem central do produto para algo mais direto e conectado com a experiência do usuário final.
+
+- **Problema Identificado:** A documentação e a visão estavam se tornando muito técnicas.
+- **Nova Narrativa (A História do Usuário):**
+  - A JobberU nasceu da frustração com plataformas de serviço complicadas e cheias de formulários.
+  - A visão é de simplicidade total: o usuário diz o que precisa e onde está (ex: "Jardinagem em Santo André"), e a plataforma o conecta aos profissionais.
+  - **O primeiro objetivo de entrega (MVP) é este:** um produto simples, rápido e que resolve o problema de conexão local sem atritos.
+
+### 2. O Desafio da Simplicidade e a Solução do "Aperto de Mão Digital"
+
+Para alcançar a simplicidade, a decisão de manter a negociação via WhatsApp foi reafirmada. Isso, no entanto, levantou o desafio central: "Como saber se o serviço foi fechado para permitir uma avaliação confiável?".
+
+- **Solução Reafirmada:** O **Sistema de Confirmação de Serviço ("Aperto de Mão Digital")** foi consolidado como a solução perfeita, pois conecta o mundo offline (negociação no WhatsApp) com a necessidade de confiança online (avaliações verificadas), sem adicionar complexidade para o usuário.
+
+### 3. Redefinição das Prioridades Finais do MVP
+
+Com base na nova clareza, funcionalidades que não servem diretamente ao propósito central de "conectar com confiança" foram adiadas. A lista de tarefas final para o lançamento do backend do MVP foi definida como:
+
+1.  **Refatorar a Criação de Avaliação:** Garantir que a rota `POST /avaliacao/create` dependa exclusivamente de um `registroId` com status `CONCLUIDO`. (Prioridade Máxima).
+2.  **Implementar Validação de Entrada (Zod):** Adicionar uma camada de segurança na porta da API, começando pela rota `POST /usuario/create`.
+3.  **Implementar a Arquitetura de Moderação:** Adicionar os campos de "aprovação" em fotos e avaliações e ajustar as consultas da API para respeitar esses campos.
+
+### 4. Roadmap Pós-MVP: Objetivos para Futuras Atualizações
+
+As seguintes funcionalidades foram estrategicamente adiadas para serem desenvolvidas em futuras versões, após a validação do MVP:
+
+- **V2.0 - Foco em Retenção e Engajamento:**
+
+  - **Sistema de Favoritos:** Permitir que clientes salvem seus prestadores preferidos para facilitar a recontratação.
+  - **Gamificação Avançada:** Expandir os níveis de cliente e prestador com benefícios e selos mais visíveis.
+  - **Busca por Proximidade (Raio):** Evoluir da busca por cidade para uma busca geoespacial ("prestadores a 5km de mim"), utilizando PostGIS.
+
+- **V2.1 - Foco em Administração e Segurança:**
+
+  - **Painel de Administrador Dedicado:** Criar uma interface web separada para facilitar a moderação de conteúdo (aprovação de fotos/comentários), gerenciamento de usuários e visualização de denúncias.
+  - **Sistema de Denúncias:** Permitir que usuários reportem perfis ou comentários inadequados.
+
+- **V3.0 - Foco em Comunicação e Ecossistema:**
+  - **Sistema de Notificações:** Implementar notificações (push ou e-mail) para eventos importantes (ex: "Você recebeu uma nova solicitação de confirmação").
+  - **Chat Interno (Opcional):** Avaliar a necessidade de um sistema de comunicação dentro da plataforma, caso o WhatsApp se mostre insuficiente.
+
+**Status:** Plano de ação final para o MVP definido. Próximo passo é iniciar a implementação da "Refatoração da Criação de Avaliação".

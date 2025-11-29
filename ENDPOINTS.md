@@ -1,132 +1,92 @@
 # Guia de Endpoints da API Jobberu
 
-Este documento serve como referência para todos os endpoints disponíveis na API, como testá-los e quais dados são esperados.
+Este documento é o guia prático para desenvolvedores consumirem a API do JobberU. Cada endpoint é explicado com seu propósito, cenário de uso e exemplos práticos.
 
 **Ferramentas Recomendadas:** [Postman](https://www.postman.com/), [Insomnia](https://insomnia.rest/) ou `curl`.
 
-**Autenticação:** Endpoints marcados com `🔒` requerem um Token de Autenticação. Para obtê-lo, faça login via `POST /usuario/login`. O token deve ser enviado no cabeçalho `Authorization` no formato `Bearer SEU_TOKEN`.
+### Autenticação
+
+Endpoints marcados com `🔒` requerem um Token de Autenticação.
+
+1.  **Obtenha o Token:** Faça uma requisição `POST /usuario/login` com email e senha.
+2.  **Use o Token:** Em todas as requisições subsequentes para rotas protegidas, inclua o cabeçalho `Authorization` no formato `Bearer SEU_TOKEN_AQUI`.
 
 ---
 
 ## 1. Módulo de Usuários
 
-Prefixo da rota: `/usuario`
+| Método   | Rota                                  | Descrição                                       | Autenticação |
+| :------- | :------------------------------------ | :---------------------------------------------- | :----------- |
+| `POST`   | `/usuario/create`                     | Cria um novo usuário (cliente ou prestador).    | Pública      |
+| `POST`   | `/usuario/login`                      | Autentica um usuário e retorna um token JWT.    | Pública      |
+| `GET`    | `/usuario/prestadores/cidade/:cidade` | Lista prestadores de uma cidade específica.     | Pública      |
+| `GET`    | `/usuario/:id`                        | Busca o perfil público de um usuário.           | Pública      |
+| `GET`    | `/usuario/:id/servicos`               | Lista todos os serviços de um prestador.        | Pública      |
+| `GET`    | `/usuario/me/avaliacoes`              | Lista as avaliações feitas pelo usuário logado. | `🔒`         |
+| `PATCH`  | `/usuario/atualizar/:id`              | Atualiza os dados do próprio perfil.            | `🔒`         |
+| `DELETE` | `/usuario/excluir/:id`                | Deleta o próprio perfil.                        | `🔒`         |
 
-### `POST /usuario/create`
+---
 
-- **Descrição:** Cria um novo usuário (cliente ou prestador).
-- **Autenticação:** Não requerida.
-- **Tipo de Corpo:** `multipart/form-data` (devido ao upload de imagem).
-- **Campos Comuns:** `nome`, `email`, `senha`, `telefone`, `is_prestador` (booleano `true` ou `false`), `cep`, `cidade`, `estado`, `foto_perfil` (arquivo de imagem, opcional).
-- **Campos para Prestadores (`is_prestador: true`):** `titulo_profissional`, `biografia`, `anos_experiencia`, `links_redes_sociais`.
-- **Exemplo `curl`:**
-  ```bash
-  curl -X POST http://localhost:3000/usuario/create \
-  -F "nome=João da Silva" \
-  -F "email=joao@email.com" \
-  -F "senha=senha123" \
-  -F "is_prestador=false" \
-  -F "foto_perfil=@/caminho/para/sua/foto.jpg"
-  ```
+#### `POST /usuario/create`
 
-### `POST /usuario/login`
+- **Cenário de Uso:** Quando um novo visitante decide se cadastrar na plataforma, seja para contratar ou para oferecer serviços.
+- **Corpo:** `multipart/form-data`.
+- **Campos:** `nome`, `email`, `senha`, `telefone`, `is_prestador` (booleano `true` ou `false`), `cep`, `foto_perfil` (opcional).
 
-- **Descrição:** Autentica um usuário e retorna um token JWT.
-- **Autenticação:** Não requerida.
+---
+
+#### `POST /usuario/login`
+
+- **Cenário de Uso:** Quando um usuário retorna à plataforma e precisa acessar sua conta para ver seu dashboard ou interagir com outros usuários.
 - **Corpo (JSON):** `{ "email": "seu-email@email.com", "senha": "sua-senha" }`
-- **Exemplo `curl`:**
-  ```bash
-  curl -X POST http://localhost:3000/usuario/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "joao@email.com", "senha": "senha123"}'
-  ```
+- **Resposta de Sucesso:** Retorna um objeto contendo o `token` e os dados do `usuario`.
 
-### `GET /usuario`
+---
 
-- **Descrição:** Lista todos os usuários cadastrados.
-- **Autenticação:** Não requerida.
+#### `GET /usuario/prestadores/cidade/:cidade`
 
-### `GET /usuario/:id`
-
-- **Descrição:** Busca um usuário prestador específico pelo ID.
-- **Autenticação:** Não requerida.
-
-### `GET /usuario/me/avaliacoes` 🔒
-
-- **Descrição:** Lista todas as avaliações feitas pelo usuário logado.
-- **Autenticação:** Requerida.
-
-### `GET /usuario/:id/servicos`
-
-- **Descrição:** Lista todos os serviços oferecidos por um prestador específico.
-- **Autenticação:** Não requerida.
-
-### `GET /usuario/prestadores/cidade/:cidade`
-
-- **Descrição:** Lista todos os prestadores de uma cidade específica. A busca ignora maiúsculas/minúsculas.
-- **Autenticação:** Não requerida.
-- **Parâmetro de URL:** `:cidade` (nome da cidade, usar hífen para espaços, ex: `Santo-Andre`).
-
-### `PATCH /usuario/atualizar/:id` 🔒
-
-- **Descrição:** Atualiza os dados do próprio perfil.
-- **Autenticação:** Requerida.
-- **Tipo de Corpo:** `multipart/form-data`.
-
-### `DELETE /usuario/excluir/:id` 🔒
-
-- **Descrição:** Deleta o próprio perfil.
-- **Autenticação:** Requerida.
+- **Cenário de Uso:** Na página inicial, quando um visitante busca por profissionais em sua cidade (ex: "Santo André"). É o principal endpoint de descoberta da plataforma.
+- **Parâmetro de URL:** `:cidade` (usar hífen para espaços, ex: `Santo-Andre`).
 
 ---
 
 ## 2. Módulo de Serviços
 
-Prefixo da rota: `/servico`
-
-### `POST /servico/create` 🔒
-
-- **Descrição:** Cria um novo serviço (apenas para prestadores).
-- **Autenticação:** Requerida (usuário deve ser `is_prestador: true`).
-- **Tipo de Corpo:** `multipart/form-data`.
-- **Campos:** `titulo`, `descricao`, `categoria`, `preco`, `imagens_servico` (arquivos de imagem).
-
-### `GET /servico`
-
-- **Descrição:** Lista todos os serviços disponíveis.
-- **Autenticação:** Não requerida.
-
-### `GET /servico/:id`
-
-- **Descrição:** Busca um serviço específico pelo ID.
-- **Autenticação:** Não requerida.
-
-### `PATCH /servico/atualizar/:id` 🔒
-
-- **Descrição:** Edita um serviço que pertence ao prestador logado.
-- **Autenticação:** Requerida.
-- **Corpo (JSON):** `{ "titulo": "Novo Título", "preco": 150.00 }`
-
-### `DELETE /servico/excluir/:id` 🔒
-
-- **Descrição:** Deleta um serviço que pertence ao prestador logado.
-- **Autenticação:** Requerida.
+| Método   | Rota                     | Descrição                                           | Autenticação |
+| :------- | :----------------------- | :-------------------------------------------------- | :----------- |
+| `POST`   | `/servico/create`        | Cria um novo serviço (requer `is_prestador: true`). | `🔒`         |
+| `GET`    | `/servico/:id`           | Busca os detalhes de um serviço específico.         | Pública      |
+| `PATCH`  | `/servico/atualizar/:id` | Edita um serviço próprio.                           | `🔒`         |
+| `DELETE` | `/servico/excluir/:id`   | Deleta um serviço próprio.                          | `🔒`         |
 
 ---
 
-## 3. Módulo de Registro de Serviço
+#### `POST /servico/create` 🔒
 
-Prefixo da rota: `/registro-servico`
+- **Cenário de Uso:** No dashboard do prestador, quando ele clica em "Adicionar Novo Serviço" para expandir seu portfólio.
+- **Corpo:** `multipart/form-data`.
+- **Campos:** `titulo`, `descricao`, `categoria`, `preco` (opcional), `imagens_servico` (array de arquivos, opcional).
 
-### `POST /registro-servico/solicitar` 🔒
+---
 
-- **Descrição:** Um prestador solicita a confirmação de um serviço a um cliente.
-- **Autenticação:** Requerida (usuário deve ser `is_prestador: true`).
+## 3. Módulo de Registro de Serviço (O Coração da Confiança)
+
+| Método  | Rota                              | Descrição                                       | Autenticação |
+| :------ | :-------------------------------- | :---------------------------------------------- | :----------- |
+| `POST`  | `/registro-servico/solicitar`     | Prestador solicita a confirmação de um serviço. | `🔒`         |
+| `PATCH` | `/registro-servico/:id/responder` | Cliente responde a uma solicitação.             | `🔒`         |
+
+---
+
+#### `POST /registro-servico/solicitar` 🔒
+
+- **Cenário de Uso:** Após concluir um serviço, o prestador acessa seu dashboard, busca o cliente para quem trabalhou e clica em "Solicitar Confirmação" para iniciar o "Aperto de Mão Digital".
 - **Corpo (JSON):** `{ "clienteId": 123 }` (ID do cliente para quem o serviço foi feito).
 - **Exemplo `curl`:**
   ```bash
   curl -X POST http://localhost:3000/registro-servico/solicitar \
-  -H "Authorization: Bearer SEU_TOKEN_DE_PRESTADOR" \
+  -H "Authorization: Bearer <TOKEN_DO_PRESTADOR>" \
   -H "Content-Type: application/json" \
   -d '{"clienteId": 2}'
   ```

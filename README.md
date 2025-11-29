@@ -1,247 +1,132 @@
-# API JobberU
+# JobberU - Manifesto e Documentação da API
 
-Backend da plataforma JobberU, uma aplicação para conectar clientes a prestadores de serviços profissionais. Esta API é responsável pelo gerenciamento de usuários (clientes e prestadores), serviços, avaliações e autenticação.
-
-## Tecnologias Utilizadas
-
-- **Node.js**: Ambiente de execução JavaScript no servidor.
-- **Express.js**: Framework para construção da API.
-- **Prisma**: ORM para interação com o banco de dados.
-- **PostgreSQL**: Banco de dados relacional.
-- **JSON Web Tokens (JWT)**: Para autenticação e autorização de rotas.
-- **Multer**: Middleware para upload de arquivos (multipart/form-data).
-- **Cloudinary**: Serviço para armazenamento de imagens na nuvem.
-- **Bcrypt.js**: Para criptografia de senhas.
+Este documento é a fonte da verdade para a API do JobberU. Ele detalha nossa missão, as regras de negócio que nos tornam únicos, as decisões de arquitetura que garantem nossa segurança e o guia técnico para desenvolvimento e consumo da API.
 
 ---
 
-## Pré-requisitos
+## 1. A História do JobberU: Simplicidade para a Vida Real
 
-Antes de começar, você vai precisar ter instalado em sua máquina:
+A JobberU nasceu de uma ideia simples: facilitar a vida das pessoas localmente.
 
-- [Node.js](https://nodejs.org/en/) (versão 18.x ou superior)
-- [Yarn](https://yarnpkg.com/) ou [NPM](https://www.npmjs.com/) (gerenciador de pacotes)
-- [Docker](https://www.docker.com/) (para rodar o banco de dados PostgreSQL facilmente)
+Observamos que muitas plataformas que oferecem serviços parecidos se tornam cansativas. Elas exigem o preenchimento de vários e vários formulários, criam processos de orçamento complicados e, no fim, adicionam mais etapas do que soluções.
+
+Nossa visão foi o oposto. Imagine uma plataforma onde você só precisa dizer o que quer e onde está. Por exemplo:
+
+> "Preciso de **Jardinagem** em **Santo André**."
+
+E pronto. A JobberU te conecta instantaneamente aos profissionais da sua região que podem te ajudar.
+
+**Nosso primeiro objetivo de entrega (MVP) é exatamente esse:** conseguir entregar um produto que fosse simples para qualquer usuário, focando na conexão rápida e direta.
 
 ---
 
-## 🚀 Como Rodar o Projeto
+## 2. O Desafio da Simplicidade e a Nossa Solução Inteligente
+
+Para alcançar essa simplicidade, tomamos uma decisão crucial: **toda e qualquer negociação seria feita de forma privativa, através do WhatsApp do prestador e do cliente.** Isso elimina a necessidade de um chat interno, sistemas de orçamento e outras complexidades. A plataforma conecta, e as pessoas conversam da forma que já estão acostumadas.
+
+Mas essa decisão criou um problema fundamental:
+
+> "Se a negociação e o acerto acontecem fora da plataforma, como vamos saber se o cliente realmente fechou o serviço com o prestador? Como podemos construir um sistema de avaliações confiável?"
+
+A resposta para esse desafio é o coração da JobberU: o **Sistema de Confirmação de Serviço**, ou o nosso "Aperto de Mão Digital".
+
+Funciona assim:
+
+1.  **Iniciativa do Prestador:** Após terminar o trabalho, o prestador (que é o maior interessado em receber uma boa avaliação) entra na JobberU e diz: "Eu finalizei um serviço para o cliente Washington".
+2.  **O "Aperto de Mão":** A plataforma envia uma notificação para o Washington perguntando: "O prestador João realmente concluiu o serviço para você?".
+3.  **Confirmação do Cliente:** Washington responde "Sim, confirmo".
+4.  **Liberação da Avaliação:** **Só depois dessa confirmação** é que a plataforma libera a caixa de avaliação para o Washington.
+
+Com esse fluxo, garantimos que cada avaliação no JobberU venha de um serviço real e verificado, construindo a **economia da confiança** que é a nossa grande missão, sem abrir mão da simplicidade que nos propusemos a entregar.
+
+---
+
+## 3. O Caminho para o MVP: Foco no Essencial
+
+Nosso primeiro lançamento (MVP) está focado em entregar os pilares descritos acima com perfeição. As tarefas restantes são:
+
+1.  **Refatorar a Criação de Avaliação:** Implementar o "cadeado final" do nosso sistema, garantindo que a rota `POST /avaliacao/create` dependa exclusivamente de um `registroId` com status `CONCLUIDO`.
+2.  **Implementar Validação de Entrada (Zod):** Adicionar uma camada de segurança na porta da nossa API, validando os dados que chegam em rotas críticas como `POST /usuario/create` para prevenir erros e ataques.
+3.  **Implementar a Arquitetura de Moderação:** Adicionar os campos de "aprovação" em fotos e avaliações e ajustar as consultas da API para respeitar esses campos, garantindo que apenas conteúdo revisado seja público.
+
+---
+
+## 4. Tecnologias e Ferramentas
+
+| Categoria          | Tecnologia          | Propósito                                                     |
+| :----------------- | :------------------ | :------------------------------------------------------------ |
+| **Core**           | Node.js, Express.js | Ambiente de execução e framework da API.                      |
+| **Banco de Dados** | PostgreSQL, Prisma  | Banco de dados relacional robusto e um ORM moderno.           |
+| **Segurança**      | JWT, Bcrypt.js      | Autenticação stateless e criptografia de senhas.              |
+| **Mídia**          | Cloudinary, Multer  | Armazenamento de imagens na nuvem e gerenciamento de uploads. |
+| **Geolocalização** | ViaCEP, Nominatim   | Enriquecimento de dados de endereço e geocodificação.         |
+
+---
+
+## 5. Guia de Instalação e Execução
 
 1.  **Clone o repositório:**
-
     ```bash
-    git clone <url-do-seu-repositorio>
-    cd api-jobberu
+    git clone <url-do-repositorio> && cd api-jobberu
     ```
-
 2.  **Instale as dependências:**
-
     ```bash
     npm install
-    # ou
-    yarn install
     ```
-
-3.  **Configure o banco de dados com Docker:**
-    (Se você já tem um PostgreSQL rodando, pule este passo)
-
+3.  **Inicie o banco de dados com Docker:**
     ```bash
     docker run --name jobberu-db -e POSTGRES_PASSWORD=docker -e POSTGRES_USER=docker -e POSTGRES_DB=jobberu -p 5432:5432 -d postgres
     ```
-
 4.  **Configure as variáveis de ambiente:**
-    Crie um arquivo chamado `.env` na raiz do projeto, copiando o conteúdo de `.env.example` (se existir) ou usando o modelo abaixo.
+    Crie um arquivo `.env` na raiz do projeto (use `.env.example` como modelo).
 
-    ```env
-    # Configuração do Banco de Dados
-    DATABASE_URL="postgresql://docker:docker@localhost:5432/jobberu?schema=public"
-
-    # Segredo para assinatura do JWT
-    JWT_SECRET="SEU_SEGREDO_SUPER_SECRETO_AQUI"
-
-    # Credenciais do Cloudinary
-    CLOUDINARY_CLOUD_NAME="seu_cloud_name"
-    CLOUDINARY_API_KEY="sua_api_key"
-    CLOUDINARY_API_SECRET="seu_api_secret"
-    ```
-
-5.  **Rode as migrações do Prisma:**
-    Este comando irá criar as tabelas no seu banco de dados com base no `schema.prisma`.
-
+5.  **Aplique as migrações do banco de dados:**
     ```bash
     npx prisma migrate dev
     ```
-
-6.  **Inicie o servidor:**
-    ```bash
-    npm run dev
-    ```
-
-O servidor estará rodando em `http://localhost:3000`.
+6.  **Inicie o servidor de desenvolvimento:**
+    `bash
+npm run dev
+`
+    O servidor estará disponível em `http://localhost:3000`.
 
 ---
 
-## 📖 Documentação dos Endpoints
+## 6. Documentação dos Endpoints da API
 
-O prefixo para todas as rotas de usuário é `/usuario` e para serviços é `/servico`.
+Endpoints marcados com `🔒` requerem um Token de Autenticação (`Authorization: Bearer <token>`).
 
-### Módulo de Usuário (`/usuario`)
+### Módulo de Usuário
 
-#### `POST /usuario/create`
+| Método   | Rota                                  | Descrição                                        | Autenticação |
+| :------- | :------------------------------------ | :----------------------------------------------- | :----------- |
+| `POST`   | `/usuario/create`                     | Cria um novo usuário.                            | Pública      |
+| `POST`   | `/usuario/login`                      | Autentica um usuário e retorna um token JWT.     | Pública      |
+| `GET`    | `/usuario/:id`                        | Busca o perfil público de um usuário.            | Pública      |
+| `GET`    | `/usuario/prestadores/cidade/:cidade` | Lista prestadores de uma cidade específica.      | Pública      |
+| `PATCH`  | `/usuario/atualizar/:id`              | Permite que um usuário edite seu próprio perfil. | `🔒`         |
+| `DELETE` | `/usuario/excluir/:id`                | Permite que um usuário delete sua própria conta. | `🔒`         |
 
-- **Descrição:** Cria um novo usuário, que pode ser do tipo `CLIENTE` ou `PRESTADOR`.
-- **Autenticação:** Pública.
-- **Tipo de Corpo:** `multipart/form-data` (devido ao upload de imagem).
-- **Campos do Corpo:**
-  - `nome` (String, Obrigatório)
-  - `email` (String, Obrigatório, Único)
-  - `senha` (String, Obrigatório)
-  - `telefone` (String, Obrigatório)
-  - `tipo` (Enum: `CLIENTE` ou `PRESTADOR`, Obrigatório)
-  - `foto_perfil` (File, Opcional) - Imagem de perfil.
-  - `cep`, `cidade`, `estado` (String, Opcional)
-  - `titulo_profissional`, `biografia`, `anos_experiencia`, `links_redes_sociais` (Campos específicos para `PRESTADOR`)
+### Módulo de Serviço
 
-#### `POST /usuario/login`
+| Método   | Rota                     | Descrição                                           | Autenticação |
+| :------- | :----------------------- | :-------------------------------------------------- | :----------- |
+| `POST`   | `/servico/create`        | Cria um novo serviço (requer `is_prestador: true`). | `🔒`         |
+| `GET`    | `/servico/:id`           | Busca um serviço específico.                        | Pública      |
+| `PATCH`  | `/servico/atualizar/:id` | Edita um serviço próprio.                           | `🔒`         |
+| `DELETE` | `/servico/excluir/:id`   | Deleta um serviço próprio.                          | `🔒`         |
 
-- **Descrição:** Autentica um usuário e retorna um token JWT.
-- **Autenticação:** Pública.
-- **Tipo de Corpo:** `application/json`.
-- **Campos do Corpo:**
-  - `email` (String, Obrigatório)
-  - `senha` (String, Obrigatório)
-- **Resposta de Sucesso (200):**
-  ```json
-  {
-    "token": "seu.jwt.token",
-    "usuario": { ...dados do usuário sem a senha }
-  }
-  ```
+### Módulo de Registro de Serviço (O Coração da Confiança)
 
-#### `GET /usuario`
+| Método  | Rota                              | Descrição                                       | Autenticação |
+| :------ | :-------------------------------- | :---------------------------------------------- | :----------- |
+| `POST`  | `/registro-servico/solicitar`     | Prestador solicita a confirmação de um serviço. | `🔒`         |
+| `PATCH` | `/registro-servico/:id/responder` | Cliente responde a uma solicitação.             | `🔒`         |
 
-- **Descrição:** Lista todos os usuários cadastrados.
-- **Autenticação:** Pública.
+### Módulo de Avaliação (O Resultado da Confiança)
 
-#### `GET /usuario/:id`
-
-- **Descrição:** Busca o perfil público de um usuário do tipo `PRESTADOR`.
-- **Autenticação:** Pública.
-
-#### `GET /usuario/:id/servicos`
-
-- **Descrição:** Lista todos os serviços oferecidos por um prestador específico.
-- **Autenticação:** Pública.
-
-#### `GET /usuario/prestadores/cidade/:cidade`
-
-- **Descrição:** Lista todos os prestadores de uma cidade específica.
-- **Autenticação:** Pública.
-
-#### `PATCH /usuario/atualizar/:id`
-
-- **Descrição:** Permite que um usuário autenticado edite seu próprio perfil.
-- **Autenticação:** Protegida (requer token JWT). O `id` na URL deve ser o mesmo do usuário dono do token.
-- **Tipo de Corpo:** `multipart/form-data`.
-- **Campos do Corpo:** Qualquer campo do usuário que possa ser editado (ex: `nome`, `telefone`, `biografia`, `foto_perfil`).
-
-#### `DELETE /usuario/excluir/:id`
-
-- **Descrição:** Permite que um usuário autenticado delete sua própria conta.
-- **Autenticação:** Protegida (requer token JWT). O `id` na URL deve ser o mesmo do usuário dono do token.
-- **Tipo de Corpo:** Nenhum.
-
-#### `GET /usuario/me/avaliacoes`
-
-- **Descrição:** Lista todas as avaliações feitas pelo usuário autenticado.
-- **Autenticação:** Protegida (requer token JWT).
-
----
-
-### Módulo de Serviço (`/servico`)
-
-#### `POST /servico/create`
-
-- **Descrição:** Cria um novo serviço. Apenas usuários autenticados do tipo `PRESTADOR` podem usar esta rota.
-- **Autenticação:** Protegida (requer token JWT no cabeçalho `Authorization: Bearer <token>`).
-- **Tipo de Corpo:** `multipart/form-data`.
-- **Campos do Corpo:**
-  - `titulo` (String, Obrigatório)
-  - `descricao` (String, Obrigatório)
-  - `categoria` (String, Obrigatório)
-  - `preco` (Number, Opcional)
-  - `imagens_servico` (File[], Opcional) - Array de imagens para o portfólio do serviço.
-
-#### `GET /servico`
-
-- **Descrição:** Lista todos os serviços cadastrados na plataforma.
-- **Autenticação:** Pública.
-
-#### `GET /servico/:id`
-
-- **Descrição:** Busca um serviço específico pelo seu ID, incluindo informações públicas do prestador.
-- **Autenticação:** Pública.
-
-#### `PATCH /servico/atualizar/:id`
-
-- **Descrição:** Permite que um prestador autenticado edite um de seus próprios serviços.
-- **Autenticação:** Protegida (requer token JWT).
-- **Tipo de Corpo:** `application/json`.
-- **Campos do Corpo:** Qualquer campo do serviço que possa ser editado (ex: `titulo`, `descricao`, `preco`).
-
-#### `DELETE /servico/excluir/:id`
-
-- **Descrição:** Permite que um prestador autenticado delete um de seus próprios serviços.
-- **Autenticação:** Protegida (requer token JWT).
-- **Tipo de Corpo:** Nenhum.
-
----
-
-### Módulo de Avaliação (`/avaliacao`)
-
-#### `POST /avaliacao/create/:prestadorId`
-
-- **Descrição:** Cria uma nova avaliação para um prestador. Apenas usuários do tipo `CLIENTE` podem avaliar.
-- **Autenticação:** Protegida (requer token JWT).
-- **Tipo de Corpo:** `application/json`.
-- **Campos do Corpo:**
-  - `nota` (Int, Obrigatório) - Ex: 1 a 5.
-  - `comentario` (String, Opcional).
-
-#### `PATCH /avaliacao/:id`
-
-- **Descrição:** Permite que um cliente edite uma avaliação que ele mesmo criou.
-- **Autenticação:** Protegida (requer token JWT).
-- **Tipo de Corpo:** `application/json`.
-
-#### `DELETE /avaliacao/:id`
-
-- **Descrição:** Permite que um cliente delete uma avaliação que ele mesmo criou.
-- **Autenticação:** Protegida (requer token JWT).
-- **Tipo de Corpo:** Nenhum.
-
----
-
-## Estrutura do Projeto
-
-```
-api-jobberu/
-├── prisma/
-│   └── schema.prisma      # Definição do banco de dados
-├── src/
-│   ├── lib/               # Módulos de suporte (Prisma, Cloudinary, Multer)
-│   ├── middlewares/       # Middlewares customizados (ex: autenticacao.js)
-│   └── modules/           # Módulos principais da aplicação
-│       ├── usuario/
-│       │   ├── controller/
-│       │   └── routes/
-│       └── servico/
-│           ├── controller/
-│           └── routes/
-│       └── avaliacao/
-│           ├── controller/
-│           └── routes/
-├── .env                   # Variáveis de ambiente (local)
-├── .gitignore             # Arquivos ignorados pelo Git
-└── package.json
-```
+| Método   | Rota                | Descrição                                            | Autenticação |
+| :------- | :------------------ | :--------------------------------------------------- | :----------- |
+| `POST`   | `/avaliacao/create` | Cria uma avaliação vinculada a um `RegistroServico`. | `🔒`         |
+| `PATCH`  | `/avaliacao/:id`    | Edita uma avaliação própria.                         | `🔒`         |
+| `DELETE` | `/avaliacao/:id`    | Deleta uma avaliação própria.                        | `🔒`         |
