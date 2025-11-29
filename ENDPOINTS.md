@@ -61,6 +61,12 @@ Prefixo da rota: `/usuario`
 - **Descrição:** Lista todos os serviços oferecidos por um prestador específico.
 - **Autenticação:** Não requerida.
 
+### `GET /usuario/prestadores/cidade/:cidade`
+
+- **Descrição:** Lista todos os prestadores de uma cidade específica. A busca ignora maiúsculas/minúsculas.
+- **Autenticação:** Não requerida.
+- **Parâmetro de URL:** `:cidade` (nome da cidade, usar hífen para espaços, ex: `Santo-Andre`).
+
 ### `PATCH /usuario/atualizar/:id` 🔒
 
 - **Descrição:** Atualiza os dados do próprio perfil.

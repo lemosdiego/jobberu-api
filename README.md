@@ -133,6 +133,11 @@ O prefixo para todas as rotas de usuário é `/usuario` e para serviços é `/se
 - **Descrição:** Lista todos os serviços oferecidos por um prestador específico.
 - **Autenticação:** Pública.
 
+#### `GET /usuario/prestadores/cidade/:cidade`
+
+- **Descrição:** Lista todos os prestadores de uma cidade específica.
+- **Autenticação:** Pública.
+
 #### `PATCH /usuario/atualizar/:id`
 
 - **Descrição:** Permite que um usuário autenticado edite seu próprio perfil.

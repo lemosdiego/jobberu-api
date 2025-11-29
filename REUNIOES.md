@@ -241,9 +241,10 @@ A arquitetura definida é clara, segura, escalável e alinhada com a estratégia
 
 ### Plano de Ação Imediato
 
-1.  **Iniciar o desenvolvimento da Pauta 1 (Geolocalização):**
-    - Alterar o `schema.prisma` para adicionar os campos `latitude` e `longitude` e tornar `cep` obrigatório.
-    - Implementar a lógica de enriquecimento de dados no `usuario.controller.js`.
-    - Pesquisar e documentar a ativação da extensão PostGIS no ambiente de desenvolvimento Docker.
+1.  **Desenvolvimento da Pauta 1 (Geolocalização):**
+    - **CONCLUÍDO:** Alteração do `schema.prisma` para adicionar `latitude`/`longitude` e tornar `cep` obrigatório.
+    - **CONCLUÍDO:** Implementação da lógica de enriquecimento de dados no `usuario.controller.js` usando ViaCEP e Nominatim.
+    - **CONCLUÍDO:** Implementação de um filtro de prestadores por cidade (`GET /usuario/prestadores/cidade/:cidade`).
+    - **PENDENTE (Longo Prazo):** Ativação da extensão PostGIS para buscas por raio.
 
-**Status:** Design da solução concluído. Próximo passo é iniciar a implementação da Pauta 1.
+**Status:** Implementação da busca por cidade e enriquecimento de dados concluída. Próximo passo é iniciar a Pauta 2 (Sistema de Favoritos).
