@@ -306,16 +306,71 @@ export async function listarPrestadoresPorCidade(request, response) {
   const cidadeFormatada = cidadeDaUrl.replace(/-/g, " ");
 
   try {
-    const prestadores = await prisma.usuario.findMany({
+    // 1. Busca os prestadores e INCLUI seus serviços e avaliações
+    const prestadoresDoBanco = await prisma.usuario.findMany({
       where: {
         cidade: {
           equals: cidadeFormatada,
           mode: "insensitive", // Ignora maiúsculas/minúsculas
         },
         is_prestador: true,
+        // ADICIONADO: Garante que só virão prestadores que têm
+        // pelo menos um serviço cadastrado.
+        servicos_oferecidos: {
+          some: {},
+        },
+      },
+      // Usar 'select' é mais explícito e otimizado do que 'include'
+      select: {
+        id: true,
+        nome: true,
+        foto_perfil_url: true,
+        titulo_profissional: true,
+        biografia: true, // 1. Adicionamos a biografia à seleção de dados
+        cidade: true,
+        estado: true,
+        avaliacoes_recebidas: { select: { nota: true } },
+        servicos_oferecidos: { take: 1, orderBy: { data_criacao: "desc" } },
       },
     });
-    return response.status(200).json({ prestadores });
+
+    // 2. Mapeia os dados brutos para o formato que o Card do frontend precisa
+    const cardsDePrestadores = prestadoresDoBanco.map((prestador) => {
+      // Soma as notas e conta o total de avaliações
+      const somaDasNotas = prestador.avaliacoes_recebidas.reduce(
+        (acc, avaliacao) => acc + avaliacao.nota,
+        0
+      );
+      const totalDeAvaliacoes = prestador.avaliacoes_recebidas.length;
+
+      // Pega os dados do primeiro serviço (se existir)
+      const primeiroServico = prestador.servicos_oferecidos[0];
+
+      // Monta o objeto final para o card
+      return {
+        id: prestador.id,
+        nome: prestador.nome,
+        foto_perfil_url: prestador.foto_perfil_url,
+        titulo_profissional: prestador.titulo_profissional,
+        biografia: prestador.biografia, // 2. Incluímos a biografia no objeto de retorno
+        cidade: prestador.cidade,
+        estado: prestador.estado,
+        total_avaliacoes: totalDeAvaliacoes,
+        soma_das_notas: somaDasNotas,
+        // Lógica mais segura: verifica se o serviço e o array de imagens existem e não estão vazios
+        primeiro_servico:
+          primeiroServico && primeiroServico.imagens?.length > 0
+            ? {
+                imagem_url: primeiroServico.imagens[0], // Pega a primeira imagem do serviço
+                preco: primeiroServico.preco,
+                categoria: primeiroServico.categoria,
+              }
+            : null,
+      };
+    });
+
+    // 3. Retorna a lista de cards formatados
+    return response.status(200).json({ prestadores: cardsDePrestadores });
   } catch (error) {
     console.error("Erro ao listar prestadores por cidade:", error);
     return response.status(500).json({ error: "Erro ao buscar prestadores" });
