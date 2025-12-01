@@ -36,6 +36,7 @@ model Usuario {
   longitude   Float?
 
   foto_perfil_url String?
+  aprovado        Boolean  @default(false) // MODERAÇÃO: Usuário precisa ser aprovado.
   data_criacao    DateTime @default(now())
 
   // --- CAMPOS DE GAMIFICAÇÃO ---
@@ -73,13 +74,14 @@ model Servico {
   descricao String   @db.Text
   categoria String
   preco     Decimal? @db.Decimal(10, 2) // Define precisão para valores monetários
-  imagens   String[]
+  imagens   String[] // Mantendo a estrutura de array, como solicitado.
+  aprovado  Boolean  @default(false) // MODERAÇÃO: Serviço precisa ser aprovado.
 
   data_criacao     DateTime @default(now())
   data_atualizacao DateTime @updatedAt
 
   // Relacionamento: Este serviço pertence a um prestador.
-  prestador   Usuario @relation("PrestadorServicos", fields: [prestadorId], references: [id])
+  prestador   Usuario @relation("PrestadorServicos", fields: [prestadorId], references: [id], onDelete: Cascade)
   prestadorId Int
 
   @@map("servicos")
@@ -89,6 +91,7 @@ model Avaliacao {
   id           Int      @id @default(autoincrement())
   nota         Int // Ex: 1 a 5
   comentario   String?  @db.Text
+  aprovada     Boolean  @default(false) // MODERAÇÃO: Avaliação precisa ser aprovada.
   data_criacao DateTime @default(now())
 
   // Relacionamento: A avaliação é sobre um prestador.

@@ -132,6 +132,14 @@ export async function authenticateUser(req, res) {
     if (!senhaValida) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
+
+    // MODERAÇÃO: Verifica se o usuário foi aprovado.
+    if (!usuario.aprovado) {
+      return res
+        .status(403)
+        .json({ error: "Sua conta está pendente de aprovação." });
+    }
+
     // Gerar token
     const token = jwt.sign({ userId: usuario.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
@@ -314,10 +322,13 @@ export async function listarPrestadoresPorCidade(request, response) {
           mode: "insensitive", // Ignora maiúsculas/minúsculas
         },
         is_prestador: true,
+        aprovado: true, // MODERAÇÃO: Só busca usuários (prestadores) aprovados.
         // ADICIONADO: Garante que só virão prestadores que têm
         // pelo menos um serviço cadastrado.
         servicos_oferecidos: {
-          some: {},
+          some: {
+            aprovado: true, // E que pelo menos um desses serviços esteja aprovado.
+          },
         },
       },
       // Usar 'select' é mais explícito e otimizado do que 'include'
@@ -329,8 +340,15 @@ export async function listarPrestadoresPorCidade(request, response) {
         biografia: true, // 1. Adicionamos a biografia à seleção de dados
         cidade: true,
         estado: true,
-        avaliacoes_recebidas: { select: { nota: true } },
-        servicos_oferecidos: { take: 1, orderBy: { data_criacao: "desc" } },
+        avaliacoes_recebidas: {
+          where: { aprovada: true }, // MODERAÇÃO: Só considera avaliações aprovadas para o cálculo da nota.
+          select: { nota: true },
+        },
+        servicos_oferecidos: {
+          where: { aprovado: true }, // MODERAÇÃO: Só exibe serviços aprovados.
+          take: 1,
+          orderBy: { data_criacao: "desc" },
+        },
       },
     });
 
@@ -358,14 +376,16 @@ export async function listarPrestadoresPorCidade(request, response) {
         total_avaliacoes: totalDeAvaliacoes,
         soma_das_notas: somaDasNotas,
         // Lógica mais segura: verifica se o serviço e o array de imagens existem e não estão vazios
+        // Lógica corrigida
         primeiro_servico:
-          primeiroServico && primeiroServico.imagens?.length > 0
+          primeiroServico && primeiroServico.imagens?.length > 0 // Verifica se o serviço existe e se o array de imagens não está vazio
             ? {
-                imagem_url: primeiroServico.imagens[0], // Pega a primeira imagem do serviço
+                // Se for verdade, monta o objeto
+                imagem_url: primeiroServico.imagens[0], // Pega a primeira imagem do array
                 preco: primeiroServico.preco,
                 categoria: primeiroServico.categoria,
               }
-            : null,
+            : null, // Caso contrário, retorna null
       };
     });
 
