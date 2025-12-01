@@ -13,6 +13,8 @@ import {
   listarPrestadoresPorCidade,
 } from "../../usuario/controller/usuario.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
+import { validate } from "../../../middlewares/validateRequest.js";
+import { criarUsuarioSchema } from "../schemas/usuario.schema.js";
 
 // 1. Cria uma instância do Multer, alimentando-o com nossa configuração.
 const upload = multer(multerConfig);
@@ -25,7 +27,12 @@ const router = Router();
 //! POST /usuario/create
 //! Cria um novo usuário (cliente ou prestador).
 //! Corpo: multipart/form-data com os campos do usuário.
-router.post("/create", upload.single("foto_perfil"), criarUsuario);
+router.post(
+  "/create",
+  upload.single("foto_perfil"),
+  validate(criarUsuarioSchema),
+  criarUsuario
+);
 
 //! POST /usuario/login
 //! Autentica um usuário e retorna um token.
