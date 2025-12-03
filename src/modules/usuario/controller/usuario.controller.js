@@ -311,21 +311,23 @@ export async function deletarUsuario(request, response) {
 }
 
 export async function listarPrestadoresPorCidade(request, response) {
-  // 1. Pega o nome da cidade da URL (ex: "Santo-Andre")
   const cidadeDaUrl = request.params.cidade;
 
-  // 2. Formata o nome para corresponder ao formato do banco de dados (ex: "Santo Andre")
-  //    Isso substitui todos os hifens por espaços.
-  const cidadeFormatada = cidadeDaUrl.replace(/-/g, " ");
+  // Função auxiliar para normalizar strings (remove acentos e converte para minúsculas)
+  const normalizarString = (str) =>
+    str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+  const cidadeBuscadaNormalizada = normalizarString(
+    cidadeDaUrl.replace(/-/g, " ")
+  );
 
   try {
-    // 1. Busca os prestadores e INCLUI seus serviços e avaliações
-    const prestadoresDoBanco = await prisma.usuario.findMany({
+    // 1. Busca TODOS os prestadores aprovados que possuem serviços aprovados
+    const todosPrestadoresAprovados = await prisma.usuario.findMany({
       where: {
-        cidade: {
-          equals: cidadeFormatada,
-          mode: "insensitive", // Ignora maiúsculas/minúsculas
-        },
         is_prestador: true,
         aprovado: true, // MODERAÇÃO: Só busca usuários (prestadores) aprovados.
         // ADICIONADO: Garante que só virão prestadores que têm
@@ -357,7 +359,14 @@ export async function listarPrestadoresPorCidade(request, response) {
       },
     });
 
-    // 2. Mapeia os dados brutos para o formato que o Card do frontend precisa
+    // 2. Filtra a lista na aplicação para garantir a correspondência exata da cidade
+    const prestadoresDoBanco = todosPrestadoresAprovados.filter((prestador) => {
+      if (!prestador.cidade) return false; // Garante que o prestador tem uma cidade cadastrada
+      const cidadeDoPrestadorNormalizada = normalizarString(prestador.cidade);
+      return cidadeDoPrestadorNormalizada === cidadeBuscadaNormalizada;
+    });
+
+    // 3. Mapeia os dados brutos para o formato que o Card do frontend precisa
     const cardsDePrestadores = prestadoresDoBanco.map((prestador) => {
       // Soma as notas e conta o total de avaliações
       const somaDasNotas = prestador.avaliacoes_recebidas.reduce(
@@ -380,21 +389,21 @@ export async function listarPrestadoresPorCidade(request, response) {
         estado: prestador.estado,
         total_avaliacoes: totalDeAvaliacoes,
         soma_das_notas: somaDasNotas,
-        // Lógica mais segura: verifica se o serviço e o array de imagens existem e não estão vazios
-        // Lógica corrigida
-        primeiro_servico:
-          primeiroServico && primeiroServico.imagens?.length > 0 // Verifica se o serviço existe e se o array de imagens não está vazio
-            ? {
-                // Se for verdade, monta o objeto
-                imagem_url: primeiroServico.imagens[0], // Pega a primeira imagem do array
-                preco: primeiroServico.preco,
-                categoria: primeiroServico.categoria,
-              }
-            : null, // Caso contrário, retorna null
+        // Lógica refatorada: Monta o objeto do serviço se ele existir,
+        // e a imagem só é adicionada se o array de imagens não estiver vazio.
+        primeiro_servico: primeiroServico
+          ? {
+              // Retorna os dados do serviço
+              preco: primeiroServico.preco,
+              categoria: primeiroServico.categoria,
+              // A imagem só é incluída se existir
+              imagem_url: primeiroServico.imagens?.[0] || null,
+            }
+          : null, // Caso contrário, retorna null
       };
     });
 
-    // 3. Retorna a lista de cards formatados
+    // 4. Retorna a lista de cards formatados
     return response.status(200).json({ prestadores: cardsDePrestadores });
   } catch (error) {
     console.error("Erro ao listar prestadores por cidade:", error);
