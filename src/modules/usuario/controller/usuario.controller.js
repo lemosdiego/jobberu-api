@@ -134,7 +134,12 @@ export async function authenticateUser(req, res) {
     }
 
     // MODERAÇÃO: Verifica se o usuário foi aprovado.
-    if (!usuario.aprovado) {
+    // --- PONTO DE DEBUG ---
+    console.log("--- DEBUG LOGIN ---");
+    console.log("Valor de 'usuario.aprovado':", usuario.aprovado);
+    console.log("Tipo de 'usuario.aprovado':", typeof usuario.aprovado);
+    // ---------------------
+    if (usuario.aprovado !== true) {
       return res
         .status(403)
         .json({ error: "Sua conta está pendente de aprovação." });
