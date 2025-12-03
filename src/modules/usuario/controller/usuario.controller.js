@@ -312,6 +312,7 @@ export async function deletarUsuario(request, response) {
 
 export async function listarPrestadoresPorCidade(request, response) {
   const cidadeDaUrl = request.params.cidade;
+  const { categoria } = request.query; // 1. Captura a categoria da query string
 
   // Função auxiliar para normalizar strings (remove acentos e converte para minúsculas)
   const normalizarString = (str) =>
@@ -325,17 +326,22 @@ export async function listarPrestadoresPorCidade(request, response) {
   );
 
   try {
+    // 2. Constrói o filtro para serviços de forma dinâmica
+    const filtroServicos = { aprovado: true };
+    if (categoria) {
+      filtroServicos.categoria = {
+        equals: categoria,
+        mode: "insensitive", // Torna a busca por categoria insensível a maiúsculas/minúsculas
+      };
+    }
+
     // 1. Busca TODOS os prestadores aprovados que possuem serviços aprovados
     const todosPrestadoresAprovados = await prisma.usuario.findMany({
       where: {
         is_prestador: true,
         aprovado: true, // MODERAÇÃO: Só busca usuários (prestadores) aprovados.
-        // ADICIONADO: Garante que só virão prestadores que têm
-        // pelo menos um serviço cadastrado.
         servicos_oferecidos: {
-          some: {
-            aprovado: true, // E que pelo menos um desses serviços esteja aprovado.
-          },
+          some: filtroServicos, // 3. Aplica o filtro de serviços (com ou sem categoria)
         },
       },
       // Usar 'select' é mais explícito e otimizado do que 'include'

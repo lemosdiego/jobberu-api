@@ -46,8 +46,12 @@ Endpoints marcados com `🔒` requerem um Token de Autenticação.
 
 #### `GET /usuario/prestadores/cidade/:cidade`
 
-- **Cenário de Uso:** Na página inicial, quando um visitante busca por profissionais em sua cidade (ex: "Santo André"). É o principal endpoint de descoberta da plataforma.
-- **Parâmetro de URL:** `:cidade` (usar hífen para espaços, ex: `Santo-Andre`).
+- **Cenário de Uso:** Na página inicial, quando um visitante busca por profissionais em sua cidade (ex: "Santo André"), com a opção de filtrar por uma categoria específica (ex: "Jardinagem"). É o principal endpoint de descoberta da plataforma.
+- **Parâmetro de URL:** `:cidade` (usar hífen para espaços, ex: `santo-andre`).
+- **Parâmetro de Consulta (Opcional):** `?categoria=<nome_da_categoria>` (ex: `?categoria=jardinagem`). A busca é insensível a maiúsculas/minúsculas.
+- **Exemplos:**
+  - Busca por cidade: `/usuario/prestadores/cidade/santo-andre`
+  - Busca por cidade e categoria: `/usuario/prestadores/cidade/santo-andre?categoria=jardinagem`
 
 ---
 
