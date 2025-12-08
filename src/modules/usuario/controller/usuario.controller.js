@@ -163,7 +163,17 @@ export async function listarUsuarios(req, res) {
     const usuario = await prisma.usuario.findMany({
       include: {
         servicos_oferecidos: true,
-        avaliacoes_recebidas: true, // Adicione esta linha
+        // Ao invés de 'true', usamos um objeto para incluir os dados do cliente na avaliação.
+        avaliacoes_recebidas: {
+          include: {
+            cliente: {
+              select: {
+                nome: true,
+                foto_perfil_url: true,
+              },
+            },
+          },
+        },
       },
     });
     return res.status(200).json(usuario);
@@ -179,7 +189,17 @@ export async function listaUsuarioId(request, response) {
       where: { id: parseInt(id, 10) },
       include: {
         servicos_oferecidos: true,
-        avaliacoes_recebidas: true, // Garanta que esta linha esteja aqui
+        // Também modificamos aqui para incluir os dados do cliente na avaliação.
+        avaliacoes_recebidas: {
+          include: {
+            cliente: {
+              select: {
+                nome: true,
+                foto_perfil_url: true,
+              },
+            },
+          },
+        },
       },
     });
     // Se nenhum usuário for encontrado com o ID, retorna 404.

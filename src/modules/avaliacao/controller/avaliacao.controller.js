@@ -45,7 +45,25 @@ export async function criarAvaliacao(request, response) {
       },
     });
 
-    return response.status(201).json(novaAvaliacao);
+    // Busca a avaliação recém-criada para retornar com os dados do cliente e prestador.
+    const avaliacaoCompleta = await prisma.avaliacao.findUnique({
+      where: { id: novaAvaliacao.id },
+      include: {
+        cliente: {
+          select: {
+            nome: true,
+            foto_perfil_url: true,
+          },
+        },
+        prestador: {
+          select: {
+            nome: true,
+          },
+        },
+      },
+    });
+
+    return response.status(201).json(avaliacaoCompleta);
   } catch (error) {
     console.error("Erro ao criar avaliação:", error);
     return response.status(500).json({ mensagem: "Erro ao criar avaliação." });
