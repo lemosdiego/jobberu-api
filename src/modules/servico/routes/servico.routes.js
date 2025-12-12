@@ -22,5 +22,10 @@ router.post(
 router.get("/", listarServicos);
 router.get("/:id", listarServicoId); // Rota para buscar um serviço específico
 router.patch("/atualizar/:id", autenticacao, editarServico);
-router.delete("/excluir/:id", autenticacao, deletarServico);
+router.delete(
+  "/excluir/:id",
+  autenticacao,
+  upload.array("imagens_servico", 5),
+  deletarServico
+);
 export default router;

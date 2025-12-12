@@ -278,7 +278,14 @@ export async function editarUsuario(request, response) {
     const novosDados = request.body;
     const fotoPerfilFile = request.file;
 
-    // 2. Se uma nova foto de perfil for enviada, faz o upload.
+    // --- INÍCIO DA CORREÇÃO ---
+    // 2. Converte 'is_prestador' de string para booleano, se existir.
+    if (novosDados.is_prestador !== undefined) {
+      novosDados.is_prestador = novosDados.is_prestador === "true";
+    }
+    // --- FIM DA CORREÇÃO ---
+
+    // 3. Se uma nova foto de perfil for enviada, faz o upload.
     if (fotoPerfilFile) {
       const fotoPerfilUrl = await carregarNoCloudinary(
         fotoPerfilFile.path,
@@ -287,12 +294,12 @@ export async function editarUsuario(request, response) {
       novosDados.foto_perfil_url = fotoPerfilUrl;
     }
 
-    // 3. Se uma nova senha for enviada, criptografa.
+    // 4. Se uma nova senha for enviada, criptografa.
     if (novosDados.senha) {
       novosDados.senha = await bcrypt.hash(novosDados.senha, 10);
     }
 
-    // 4. Atualiza o usuário no banco.
+    // 5. Atualiza o usuário no banco.
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id: usuarioIdToken },
       data: novosDados,
@@ -302,7 +309,15 @@ export async function editarUsuario(request, response) {
     return response.status(200).json(usuarioSemSenha);
   } catch (error) {
     console.error("Erro ao editar usuário:", error);
-    return response.status(500).json({ error: "Erro ao editar usuário" });
+    // Adiciona mais detalhes ao log de erro para facilitar a depuração
+    if (error.code === "P2025") {
+      // Exemplo de código de erro do Prisma
+      return response.status(404).json({ error: "Usuário não encontrado." });
+    }
+    return response.status(500).json({
+      error: "Erro interno ao editar usuário",
+      details: error.message,
+    });
   }
 }
 
