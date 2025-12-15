@@ -81,44 +81,99 @@ export async function listarServicoId(request, response) {
     return response.status(500).json({ mensagem: "Erro ao listar serviço" });
   }
 }
+// No seu controller de serviço no backend
+
 export async function editarServico(request, response) {
   try {
-    // Verificação de tipo por segurança
     if (!request.usuario.is_prestador) {
       return response
         .status(403)
         .json({ mensagem: "Apenas prestadores podem editar serviços." });
     }
-    // coleta os ids de serviço, usuario PRESTADOR logado e dados do front end envia para atualizar
+
     const servicoId = parseInt(request.params.id, 10);
     const prestadorId = request.usuario.id;
     const novosDados = request.body;
+    const novasImagensFiles = request.files; // Arquivos do multer
 
-    //verificação de autorização, se o serviço pertence ao prestador logado
-    const servico = await prisma.servico.findUnique({
+    // 1. VERIFICAÇÃO DE AUTORIZAÇÃO
+    const servicoExistente = await prisma.servico.findUnique({
       where: { id: servicoId },
     });
-    // se o serviço nao existir?
-    if (!servico) {
+
+    if (!servicoExistente) {
       return response.status(404).json({ mensagem: "Serviço não encontrado." });
     }
-    // verifica se o prestador é o mesmo do usuario logado
-    if (servico.prestadorId !== prestadorId) {
+
+    if (servicoExistente.prestadorId !== prestadorId) {
       return response
         .status(403)
-        .json({ mensagem: "Prestador não autorizado a editar este serviço." });
+        .json({ mensagem: "Você não tem permissão para editar este serviço." });
     }
-    // se todos os testes passarem, atualiza o serviço
+
+    // 2. PROCESSAMENTO E CONVERSÃO DOS DADOS
+    const dadosParaAtualizar = {
+      titulo: novosDados.titulo,
+      descricao: novosDados.descricao,
+      categoria: novosDados.categoria,
+    };
+
+    // --- CORREÇÃO AQUI ---
+    // Converte 'preco' de string para número, se ele existir.
+    if (
+      novosDados.preco !== undefined &&
+      novosDados.preco !== null &&
+      novosDados.preco !== ""
+    ) {
+      const precoNumerico = parseFloat(novosDados.preco);
+      if (isNaN(precoNumerico)) {
+        return response
+          .status(400)
+          .json({ mensagem: "O preço fornecido é inválido." });
+      }
+      dadosParaAtualizar.preco = precoNumerico;
+    }
+
+    // 3. LÓGICA DE ATUALIZAÇÃO DE IMAGENS
+    let imagensFinais = servicoExistente.imagens || [];
+
+    // Remove imagens marcadas para exclusão
+    if (novosDados.imagens_a_remover) {
+      const urlsParaRemover = Array.isArray(novosDados.imagens_a_remover)
+        ? novosDados.imagens_a_remover
+        : [novosDados.imagens_a_remover];
+
+      imagensFinais = imagensFinais.filter(
+        (imgUrl) => !urlsParaRemover.includes(imgUrl)
+      );
+    }
+
+    // Adiciona novas imagens
+    if (novasImagensFiles && novasImagensFiles.length > 0) {
+      const uploadPromises = novasImagensFiles.map((file) =>
+        carregarNoCloudinary(file.path, "imagens_servicos")
+      );
+      const novasUrls = await Promise.all(uploadPromises);
+      imagensFinais.push(...novasUrls);
+    }
+
+    dadosParaAtualizar.imagens = imagensFinais;
+
+    // 4. ATUALIZAÇÃO NO BANCO
     const servicoAtualizado = await prisma.servico.update({
       where: { id: servicoId },
-      data: novosDados,
+      data: dadosParaAtualizar,
     });
+
     return response.status(200).json(servicoAtualizado);
   } catch (erro) {
-    console.error("Erro ao editar serviço:", erro);
-    return response.status(500).json({ mensagem: "Erro ao editar serviço." });
+    console.error("ERRO DETALHADO AO EDITAR SERVIÇO:", erro);
+    return response
+      .status(500)
+      .json({ mensagem: "Erro interno ao editar o serviço." });
   }
 }
+
 export async function deletarServico(request, response) {
   try {
     // verificar tipo por segurança

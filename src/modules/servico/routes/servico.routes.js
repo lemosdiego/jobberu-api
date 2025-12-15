@@ -21,7 +21,12 @@ router.post(
 );
 router.get("/", listarServicos);
 router.get("/:id", listarServicoId); // Rota para buscar um serviço específico
-router.patch("/atualizar/:id", autenticacao, editarServico);
+router.patch(
+  "/atualizar/:id",
+  autenticacao,
+  upload.array("imagens", 5), // <-- ADICIONE O MIDDLEWARE MULTER AQUI
+  editarServico
+);
 router.delete(
   "/excluir/:id",
   autenticacao,
