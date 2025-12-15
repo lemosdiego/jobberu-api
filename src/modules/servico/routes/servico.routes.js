@@ -30,7 +30,8 @@ router.patch(
 router.delete(
   "/excluir/:id",
   autenticacao,
-  upload.array("imagens_servico", 5),
+  // upload.array("imagens_servico", 5), // Remova esta linha
   deletarServico
 );
+
 export default router;

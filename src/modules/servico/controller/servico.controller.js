@@ -81,8 +81,6 @@ export async function listarServicoId(request, response) {
     return response.status(500).json({ mensagem: "Erro ao listar serviço" });
   }
 }
-// No seu controller de serviço no backend
-
 export async function editarServico(request, response) {
   try {
     if (!request.usuario.is_prestador) {
@@ -173,7 +171,6 @@ export async function editarServico(request, response) {
       .json({ mensagem: "Erro interno ao editar o serviço." });
   }
 }
-
 export async function deletarServico(request, response) {
   try {
     // verificar tipo por segurança
