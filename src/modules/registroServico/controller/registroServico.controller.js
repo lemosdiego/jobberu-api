@@ -1,6 +1,38 @@
 import prisma from "../../../lib/prisma.js";
 import { StatusServico } from "@prisma/client";
 
+export async function buscarClientePorCelular(request, response) {
+  try {
+    const { celular } = request.query;
+
+    if (!celular) {
+      return response
+        .status(400)
+        .json({ mensagem: "O número de celular é obrigatório para a busca." });
+    }
+
+    // Normaliza o número de celular, removendo todos os caracteres não numéricos.
+    const celularLimpo = celular.replace(/\D/g, "");
+
+    const cliente = await prisma.usuario.findFirst({
+      where: { telefone: celularLimpo },
+      select: {
+        id: true,
+        nome: true,
+        foto_perfil_url: true,
+      },
+    });
+
+    if (!cliente) {
+      return response.status(404).json({ mensagem: "Cliente não encontrado." });
+    }
+
+    return response.status(200).json(cliente);
+  } catch (error) {
+    console.error("Erro ao buscar cliente por celular:", error);
+    return response.status(500).json({ mensagem: "Erro interno do servidor." });
+  }
+}
 export async function solicitarConfirmacao(request, response) {
   try {
     // 1. VERIFICAÇÃO DE PERMISSÃO

@@ -4,7 +4,7 @@ import cors from "cors";
 import usuarioRouter from "./modules/usuario/routes/usuario.routes.js";
 import servicoRouter from "./modules/servico/routes/servico.routes.js";
 import avaliacaoRouter from "./modules/avaliacao/routers/avaliacao.routes.js"; // Corrigido: 'routers' em vez de 'routes'
-import registroRouter from "./modules/registroServico/registroServico.routes.js"; // Adicionado: importação do registroRouter
+import registroRouter from "./modules/registroServico/routes/registroServico.routes.js"; // Caminho corrigido
 
 const app = express();
 app.use(cors());
