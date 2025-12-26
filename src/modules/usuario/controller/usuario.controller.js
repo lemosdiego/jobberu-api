@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import carregarNoCloudinary from "../../../lib/cloudinary.js";
 
 export async function criarUsuario(req, res) {
-  // Desestrutura campos do req.body
+  // Desestrutura TODOS os campos do front (incluindo endereço visual)
   const {
     nome,
     email,
@@ -12,8 +12,11 @@ export async function criarUsuario(req, res) {
     telefone,
     is_prestador,
     cep,
+    logradouro,
+    bairro,
+    numero,
     cidade,
-    estado,
+    estado, // ← ADICIONADO
     titulo_profissional,
     biografia,
     anos_experiencia,
@@ -21,19 +24,13 @@ export async function criarUsuario(req, res) {
   } = req.body;
 
   const fotoPerfilFile = req.file;
-
-  // Converte o valor de 'is_prestador' de string para boolean
   const isPrestadorBoolean = is_prestador === "true";
 
   try {
-    let dadosEndereco = {};
     let lat = null;
     let lon = null;
 
-    // Criptografar a senha
     const senhaHash = await bcrypt.hash(senha, 10);
-
-    // URL da foto (se enviada)
     let fotoPerfilUrl = null;
     if (fotoPerfilFile) {
       fotoPerfilUrl = await carregarNoCloudinary(
@@ -42,43 +39,34 @@ export async function criarUsuario(req, res) {
       );
     }
 
-    // --- ENRIQUECIMENTO DE DADOS GEOGRÁFICOS ---
+    // --- GEOLOCALIZAÇÃO (só pra lat/lon) ---
     if (cep) {
-      // 1. Busca dados do endereço pelo CEP
       const respostaViaCep = await fetch(
         `https://viacep.com.br/ws/${cep}/json/`
       );
-      dadosEndereco = await respostaViaCep.json();
+      const dadosEndereco = await respostaViaCep.json();
 
       if (dadosEndereco.erro) {
         return res.status(400).json({ error: "CEP inválido" });
       }
 
-      // 2. Busca coordenadas pelo endereço obtido
+      // Geolocalização (mantém)
       const enderecoCompleto = `${dadosEndereco.logradouro}, ${dadosEndereco.localidade}, ${dadosEndereco.uf}`;
       const respostaNominatim = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           enderecoCompleto
         )}`,
-        {
-          headers: {
-            // Adicionar um User-Agent é uma exigência da política de uso do Nominatim
-            // para evitar bloqueios por excesso de requisições.
-            "User-Agent": "JobberU App/1.0 (seu-contato@email.com)",
-          },
-        }
+        { headers: { "User-Agent": "JobberU App/1.0 (seu-contato@email.com)" } }
       );
       const dadosGeograficos = await respostaNominatim.json();
 
-      // 3. Extrai latitude e longitude se encontradas
       if (dadosGeograficos && dadosGeograficos.length > 0) {
-        // Usamos parseFloat para garantir que o valor seja um número
         lat = parseFloat(dadosGeograficos[0].lat);
         lon = parseFloat(dadosGeograficos[0].lon);
       }
     }
 
-    // Montar objeto de cadastro
+    // ✅ SALVA ENDEREÇO DO FRONT (visual) + geolocalização
     const dadosUsuario = {
       nome,
       email,
@@ -86,14 +74,17 @@ export async function criarUsuario(req, res) {
       telefone,
       is_prestador: isPrestadorBoolean,
       cep,
-      cidade: dadosEndereco.localidade || cidade, // Usa o dado do ViaCEP, ou o original se falhar
-      estado: dadosEndereco.uf || estado, // Usa o dado do ViaCEP, ou o original se falhar
+      logradouro,
+      bairro,
+      numero, // ← FRONT VISUAL SALVO!
+      cidade,
+      estado, // ← Front ou ViaCEP
       latitude: lat,
       longitude: lon,
       foto_perfil_url: fotoPerfilUrl,
     };
 
-    // Campos específicos de prestador
+    // Campos prestador...
     if (isPrestadorBoolean) {
       if (titulo_profissional !== undefined)
         dadosUsuario.titulo_profissional = titulo_profissional;
@@ -107,10 +98,7 @@ export async function criarUsuario(req, res) {
       }
     }
 
-    // Cria usuário no Prisma
     const usuario = await prisma.usuario.create({ data: dadosUsuario });
-
-    // Remove a senha do objeto retornado
     const { senha: _, ...usuarioSemSenha } = usuario;
     return res.status(201).json(usuarioSemSenha);
   } catch (error) {
