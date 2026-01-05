@@ -376,6 +376,7 @@ export async function listarPrestadoresPorCidade(request, response) {
         biografia: true, // 1. Adicionamos a biografia à seleção de dados
         cidade: true,
         estado: true,
+        nivel_prestador: true, // Incluímos o nível na busca do banco
         avaliacoes_recebidas: {
           where: { aprovada: true }, // MODERAÇÃO: Só considera avaliações aprovadas para o cálculo da nota.
           select: { nota: true },
@@ -416,6 +417,7 @@ export async function listarPrestadoresPorCidade(request, response) {
         biografia: prestador.biografia, // 2. Incluímos a biografia no objeto de retorno
         cidade: prestador.cidade,
         estado: prestador.estado,
+        nivel_prestador: prestador.nivel_prestador, // Passamos o nível para o frontend
         total_avaliacoes: totalDeAvaliacoes,
         soma_das_notas: somaDasNotas,
         // Lógica refatorada: Monta o objeto do serviço se ele existir,
@@ -437,5 +439,69 @@ export async function listarPrestadoresPorCidade(request, response) {
   } catch (error) {
     console.error("Erro ao listar prestadores por cidade:", error);
     return response.status(500).json({ error: "Erro ao buscar prestadores" });
+  }
+}
+
+// --- FUNÇÕES DE GAMIFICAÇÃO ---
+//Regras de Nivel de Prestadores
+
+//Iniciante: Estado Padrão de todos os usuarios.
+//Bronze: Mais que 8 avaliações com nota média igual ou maior que 4.5
+//prata Mais que 20 avaliações com nota média igual ou maior que 4.5
+//Ouro: Mais que 50 avaliações com nota média igual ou maior que 4.5
+//Platina: Mais que 70 avaliações com nota média igual ou maior que 4.5
+//Diamante: Mais que 100 avaliações com nota média igual ou maior que 4.5
+
+/**
+ * Calcula e atualiza o nível (selo) do prestador com base nas avaliações recebidas.
+ * Deve ser chamada sempre que uma nova avaliação for aprovada.
+ */
+export async function atualizarNivelPrestador(usuarioId) {
+  try {
+    const id =
+      typeof usuarioId === "string" ? parseInt(usuarioId, 10) : usuarioId;
+
+    // 1. Busca estatísticas das avaliações APROVADAS
+    const estatisticas = await prisma.avaliacao.aggregate({
+      where: {
+        prestadorId: id,
+        aprovada: true,
+      },
+      _avg: {
+        nota: true,
+      },
+      _count: {
+        nota: true,
+      },
+    });
+
+    const totalAvaliacoes = estatisticas._count.nota || 0;
+    const mediaNota = estatisticas._avg.nota || 0;
+
+    // 2. Regras de Gamificação (Baseado nas suas definições)
+    // Nota média deve ser sempre >= 4.5 para subir de nível
+    let novoNivel = "Iniciante";
+
+    if (totalAvaliacoes > 100 && mediaNota >= 4.5) {
+      novoNivel = "Diamante";
+    } else if (totalAvaliacoes > 70 && mediaNota >= 4.5) {
+      novoNivel = "Platina";
+    } else if (totalAvaliacoes > 50 && mediaNota >= 4.5) {
+      novoNivel = "Ouro";
+    } else if (totalAvaliacoes > 20 && mediaNota >= 4.5) {
+      novoNivel = "Prata";
+    } else if (totalAvaliacoes > 8 && mediaNota >= 4.5) {
+      novoNivel = "Bronze";
+    }
+
+    // 3. Atualiza o usuário no banco
+    await prisma.usuario.update({
+      where: { id: id },
+      data: { nivel_prestador: novoNivel },
+    });
+
+    return novoNivel;
+  } catch (error) {
+    console.error(`Erro ao atualizar nível do prestador ${usuarioId}:`, error);
   }
 }
