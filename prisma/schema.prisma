@@ -40,8 +40,8 @@ model Usuario {
   data_criacao    DateTime @default(now())
 
   // --- CAMPOS DE GAMIFICAÇÃO ---
-  nivel_cliente   String   @default("Bronze")
-  nivel_prestador String   @default("Bronze")
+  nivel_cliente   String   @default("Iniciante")
+  nivel_prestador String   @default("Iniciante")
 
   // --- CAMPOS PARA PERFIL PÚBLICO DO PRESTADOR ---
   titulo_profissional String?
