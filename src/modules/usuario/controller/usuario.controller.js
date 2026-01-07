@@ -1,8 +1,8 @@
 import prisma from "../../../lib/prisma.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import carregarNoCloudinary from "../../../lib/cloudinary.js";
 import CreateUserService from "../services/CreateUserService.js";
+import AuthenticateUserService from "../services/AuthenticateUserService.js";
 
 export async function createUser(req, res) {
   try {
@@ -16,46 +16,21 @@ export async function createUser(req, res) {
     return res.status(500).json({ error: "Erro ao criar usuário" });
   }
 }
-
 export async function authenticateUser(req, res) {
-  const { email, senha } = req.body;
   try {
-    // Buscar usuário
-    const usuario = await prisma.usuario.findUnique({ where: { email } });
-    if (!usuario) {
-      return res.status(401).json({ error: "Credenciais inválidas" });
-    }
-    // Comparar senha
-    const senhaValida = await bcrypt.compare(senha, usuario.senha);
-    if (!senhaValida) {
-      return res.status(401).json({ error: "Credenciais inválidas" });
-    }
-
-    // MODERAÇÃO: Verifica se o usuário foi aprovado.
-    // --- PONTO DE DEBUG ---
-    console.log("--- DEBUG LOGIN ---");
-    console.log("Valor de 'usuario.aprovado':", usuario.aprovado);
-    console.log("Tipo de 'usuario.aprovado':", typeof usuario.aprovado);
-    // ---------------------
-    if (usuario.aprovado !== true) {
-      return res
-        .status(403)
-        .json({ error: "Sua conta está pendente de aprovação." });
-    }
-
-    // Gerar token
-    const token = jwt.sign({ userId: usuario.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-    // Remover a senha do objeto retornado
-    const { senha: _, ...usuarioSemSenha } = usuario;
-    return res.status(200).json({ token, usuario: usuarioSemSenha });
+    const resultado = await AuthenticateUserService(req.body);
+    return res.status(200).json(resultado);
   } catch (error) {
+    if (error.message === "Credenciais inválidas") {
+      return res.status(401).json({ error: error.message });
+    }
+    if (error.message === "Sua conta está pendente de aprovação.") {
+      return res.status(403).json({ error: error.message });
+    }
     console.error("Erro de autenticação:", error);
-    res.status(500).json({ error: "Erro no servidor" });
+    return res.status(500).json({ error: "Erro no servidor" });
   }
 }
-
 export async function listarUsuarios(req, res) {
   try {
     const usuario = await prisma.usuario.findMany({
@@ -79,7 +54,6 @@ export async function listarUsuarios(req, res) {
     return res.status(500).json({ error: "Erro ao buscar usuários" });
   }
 }
-
 export async function listaUsuarioId(request, response) {
   const { id } = request.params;
   try {
@@ -111,7 +85,6 @@ export async function listaUsuarioId(request, response) {
     return response.status(500).json({ error: "Erro ao buscar profissional" });
   }
 }
-
 export async function listarServicosDoPrestador(request, response) {
   try {
     // 1. Pega o ID do prestador vindo dos parâmetros da URL.
@@ -134,7 +107,6 @@ export async function listarServicosDoPrestador(request, response) {
     return response.status(500).json({ error: "Erro ao buscar os serviços." });
   }
 }
-
 export async function listarMinhasAvaliacoes(request, response) {
   try {
     const clienteId = request.usuario.id;
@@ -160,7 +132,6 @@ export async function listarMinhasAvaliacoes(request, response) {
     return response.status(500).json({ error: "Erro ao buscar avaliações." });
   }
 }
-
 export async function editarUsuario(request, response) {
   try {
     const usuarioIdParams = parseInt(request.params.id, 10);
@@ -218,7 +189,6 @@ export async function editarUsuario(request, response) {
     });
   }
 }
-
 export async function deletarUsuario(request, response) {
   try {
     const usuarioIdParams = parseInt(request.params.id, 10);
@@ -242,7 +212,6 @@ export async function deletarUsuario(request, response) {
     return response.status(500).json({ error: "Erro ao deletar usuário" });
   }
 }
-
 export async function listarPrestadoresPorCidade(request, response) {
   const cidadeDaUrl = request.params.cidade;
   const { categoria } = request.query; // 1. Captura a categoria da query string
