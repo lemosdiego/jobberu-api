@@ -3,7 +3,7 @@ import multer from "multer";
 import multerConfig from "../../../lib/multer.js";
 import {
   authenticateUser,
-  criarUsuario,
+  createUser,
   listarUsuarios,
   listaUsuarioId,
   editarUsuario,
@@ -31,7 +31,7 @@ router.post(
   "/create",
   upload.single("foto_perfil"),
   validate(criarUsuarioSchema),
-  criarUsuario
+  createUser
 );
 
 //! POST /usuario/login

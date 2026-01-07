@@ -2,106 +2,16 @@ import prisma from "../../../lib/prisma.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import carregarNoCloudinary from "../../../lib/cloudinary.js";
+import CreateUserService from "../services/CreateUserService.js";
 
-export async function criarUsuario(req, res) {
-  // Desestrutura TODOS os campos do front (incluindo endereço visual)
-  const {
-    nome,
-    email,
-    senha,
-    telefone,
-    is_prestador,
-    cep,
-    logradouro,
-    bairro,
-    numero,
-    cidade,
-    estado, // ← ADICIONADO
-    titulo_profissional,
-    biografia,
-    anos_experiencia,
-    links_redes_sociais,
-  } = req.body;
-
-  const fotoPerfilFile = req.file;
-  const isPrestadorBoolean = is_prestador === "true";
-
+export async function createUser(req, res) {
   try {
-    let lat = null;
-    let lon = null;
-
-    const senhaHash = await bcrypt.hash(senha, 10);
-    let fotoPerfilUrl = null;
-    if (fotoPerfilFile) {
-      fotoPerfilUrl = await carregarNoCloudinary(
-        fotoPerfilFile.path,
-        "fotos_perfil_usuarios"
-      );
-    }
-
-    // --- GEOLOCALIZAÇÃO (só pra lat/lon) ---
-    if (cep) {
-      const respostaViaCep = await fetch(
-        `https://viacep.com.br/ws/${cep}/json/`
-      );
-      const dadosEndereco = await respostaViaCep.json();
-
-      if (dadosEndereco.erro) {
-        return res.status(400).json({ error: "CEP inválido" });
-      }
-
-      // Geolocalização (mantém)
-      const enderecoCompleto = `${dadosEndereco.logradouro}, ${dadosEndereco.localidade}, ${dadosEndereco.uf}`;
-      const respostaNominatim = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          enderecoCompleto
-        )}`,
-        { headers: { "User-Agent": "JobberU App/1.0 (seu-contato@email.com)" } }
-      );
-      const dadosGeograficos = await respostaNominatim.json();
-
-      if (dadosGeograficos && dadosGeograficos.length > 0) {
-        lat = parseFloat(dadosGeograficos[0].lat);
-        lon = parseFloat(dadosGeograficos[0].lon);
-      }
-    }
-
-    // ✅ SALVA ENDEREÇO DO FRONT (visual) + geolocalização
-    const dadosUsuario = {
-      nome,
-      email,
-      senha: senhaHash,
-      telefone,
-      is_prestador: isPrestadorBoolean,
-      cep,
-      logradouro,
-      bairro,
-      numero, // ← FRONT VISUAL SALVO!
-      cidade,
-      estado, // ← Front ou ViaCEP
-      latitude: lat,
-      longitude: lon,
-      foto_perfil_url: fotoPerfilUrl,
-    };
-
-    // Campos prestador...
-    if (isPrestadorBoolean) {
-      if (titulo_profissional !== undefined)
-        dadosUsuario.titulo_profissional = titulo_profissional;
-      if (biografia !== undefined) dadosUsuario.biografia = biografia;
-      if (anos_experiencia !== undefined)
-        dadosUsuario.anos_experiencia = parseInt(anos_experiencia, 10);
-      if (links_redes_sociais !== undefined) {
-        dadosUsuario.links_redes_sociais = Array.isArray(links_redes_sociais)
-          ? links_redes_sociais
-          : [links_redes_sociais];
-      }
-    }
-
-    const usuario = await prisma.usuario.create({ data: dadosUsuario });
-    const { senha: _, ...usuarioSemSenha } = usuario;
-    return res.status(201).json(usuarioSemSenha);
+    const user = await CreateUserService(req.body, req.file);
+    return res.status(201).json(user);
   } catch (error) {
+    if (error.message === "CEP inválido") {
+      return res.status(400).json({ error: error.message });
+    }
     console.error("Erro ao criar usuário:", error);
     return res.status(500).json({ error: "Erro ao criar usuário" });
   }
