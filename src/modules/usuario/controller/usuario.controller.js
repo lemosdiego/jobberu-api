@@ -3,7 +3,10 @@ import bcrypt from "bcryptjs";
 import carregarNoCloudinary from "../../../lib/cloudinary.js";
 import CreateUserService from "../services/CreateUserService.js";
 import AuthenticateUserService from "../services/AuthenticateUserService.js";
+import ListUserService from "../services/ListUserService.js";
+import ListUsersIdService from "../services/ListUsersIdService.js";
 
+//Criar Usuario
 export async function createUser(req, res) {
   try {
     const user = await CreateUserService(req.body, req.file);
@@ -16,6 +19,7 @@ export async function createUser(req, res) {
     return res.status(500).json({ error: "Erro ao criar usuário" });
   }
 }
+//Autenticar Usuario
 export async function authenticateUser(req, res) {
   try {
     const resultado = await AuthenticateUserService(req.body);
@@ -31,60 +35,29 @@ export async function authenticateUser(req, res) {
     return res.status(500).json({ error: "Erro no servidor" });
   }
 }
-export async function listarUsuarios(req, res) {
+//Listar Usuarios
+export async function listUsers(req, res) {
   try {
-    const usuario = await prisma.usuario.findMany({
-      include: {
-        servicos_oferecidos: true,
-        // Ao invés de 'true', usamos um objeto para incluir os dados do cliente na avaliação.
-        avaliacoes_recebidas: {
-          include: {
-            cliente: {
-              select: {
-                nome: true,
-                foto_perfil_url: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    return res.status(200).json(usuario);
+    const usuarios = await ListUserService();
+    return res.status(200).json(usuarios);
   } catch (error) {
     return res.status(500).json({ error: "Erro ao buscar usuários" });
   }
 }
-export async function listaUsuarioId(request, response) {
-  const { id } = request.params;
+//Buscar Usuario
+export async function listUsersId(req, res) {
   try {
-    const usuario = await prisma.usuario.findUnique({
-      where: { id: parseInt(id, 10) },
-      include: {
-        servicos_oferecidos: true,
-        // Também modificamos aqui para incluir os dados do cliente na avaliação.
-        avaliacoes_recebidas: {
-          include: {
-            cliente: {
-              select: {
-                nome: true,
-                foto_perfil_url: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    // Se nenhum usuário for encontrado com o ID, retorna 404.
-    if (!usuario) {
-      return response.status(404).json({ error: "Usuário não encontrado" });
-    }
-    // Remova o campo senha
-    const { senha, ...publico } = usuario;
-    return response.status(200).json(publico);
+    const { id } = req.params;
+    const usuario = await ListUsersIdService(id);
+    return res.status(200).json(usuario);
   } catch (error) {
-    return response.status(500).json({ error: "Erro ao buscar profissional" });
+    if (error.message === "Usuário não encontrado") {
+      return res.status(404).json({ error: error.message });
+    }
+    return res.status(500).json({ error: "Erro ao buscar usuário" });
   }
 }
+//Listar Servicos do Prestador
 export async function listarServicosDoPrestador(request, response) {
   try {
     // 1. Pega o ID do prestador vindo dos parâmetros da URL.

@@ -4,13 +4,13 @@ import multerConfig from "../../../lib/multer.js";
 import {
   authenticateUser,
   createUser,
-  listarUsuarios,
-  listaUsuarioId,
+  listUsers,
   editarUsuario,
   deletarUsuario,
   listarServicosDoPrestador,
   listarMinhasAvaliacoes,
   listarPrestadoresPorCidade,
+  listUsersId,
 } from "../../usuario/controller/usuario.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 import { validate } from "../../../middlewares/validateRequest.js";
@@ -41,11 +41,11 @@ router.post("/login", authenticateUser);
 
 //! GET /usuario
 //! Lista todos os usuários.
-router.get("/", listarUsuarios);
+router.get("/", listUsers);
 
 //! GET /usuario/:id
 //! Busca um prestador específico pelo ID.
-router.get("/:id", listaUsuarioId);
+router.get("/:id", listUsersId);
 
 //! GET /usuario/me/avaliacoes
 //! (🔒 Autenticado) Lista as avaliações feitas pelo usuário logado.
