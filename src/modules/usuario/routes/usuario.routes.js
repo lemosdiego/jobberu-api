@@ -7,10 +7,10 @@ import {
   listUsers,
   editarUsuario,
   deletarUsuario,
-  listarServicosDoPrestador,
-  listarMinhasAvaliacoes,
   listarPrestadoresPorCidade,
   listUsersId,
+  listProviderServices,
+  listMyReviews,
 } from "../../usuario/controller/usuario.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 import { validate } from "../../../middlewares/validateRequest.js";
@@ -19,7 +19,6 @@ import { criarUsuarioSchema } from "../schemas/usuario.schema.js";
 // 1. Cria uma instância do Multer, alimentando-o com nossa configuração.
 const upload = multer(multerConfig);
 const router = Router();
-
 // 2. Aplica o middleware do Multer na rota de criação.
 // - 'upload.single()' diz ao Multer para esperar um único arquivo.
 // - "'foto_perfil'" é o nome do campo que o front-end deve usar para enviar o arquivo.
@@ -33,27 +32,26 @@ router.post(
   validate(criarUsuarioSchema),
   createUser
 );
-
 //! POST /usuario/login
 //! Autentica um usuário e retorna um token.
 //! Corpo: JSON com { email, senha }.
 router.post("/login", authenticateUser);
-
 //! GET /usuario
 //! Lista todos os usuários.
 router.get("/", listUsers);
-
 //! GET /usuario/:id
 //! Busca um prestador específico pelo ID.
 router.get("/:id", listUsersId);
-
+//! GET /usuario/:id/servicos
+//! Lista os serviços de um prestador específico.
+router.get("/:id/servicos", listProviderServices);
 //! GET /usuario/me/avaliacoes
 //! (🔒 Autenticado) Lista as avaliações feitas pelo usuário logado.
-router.get("/me/avaliacoes", autenticacao, listarMinhasAvaliacoes);
+router.get("/me/avaliacoes", autenticacao, listMyReviews);
 
 //! GET /usuario/:id/servicos
 //! Lista os serviços de um prestador específico.
-router.get("/:id/servicos", listarServicosDoPrestador);
+router.get("/:id/servicos", listProviderServices);
 
 //! PATCH /usuario/atualizar/:id
 //! (🔒 Autenticado) Atualiza o perfil do próprio usuário.

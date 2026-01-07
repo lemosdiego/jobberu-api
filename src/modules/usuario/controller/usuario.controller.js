@@ -5,6 +5,8 @@ import CreateUserService from "../services/CreateUserService.js";
 import AuthenticateUserService from "../services/AuthenticateUserService.js";
 import ListUserService from "../services/ListUserService.js";
 import ListUsersIdService from "../services/ListUsersIdService.js";
+import ListServicesProviderService from "../services/ListServicesProviderService.js";
+import ListMyReviewsService from "../services/ListMyReviewsService.js";
 
 //Criar Usuario
 export async function createUser(req, res) {
@@ -58,51 +60,26 @@ export async function listUsersId(req, res) {
   }
 }
 //Listar Servicos do Prestador
-export async function listarServicosDoPrestador(request, response) {
+export async function listProviderServices(req, res) {
   try {
-    // 1. Pega o ID do prestador vindo dos parâmetros da URL.
-    const { id } = request.params;
-
-    // 2. Converte o ID para um número inteiro para usar na busca.
-    const prestadorId = parseInt(id, 10);
-
-    // 3. Busca na tabela de serviços todos que correspondem ao prestadorId.
-    const servicos = await prisma.servico.findMany({
-      where: {
-        prestadorId: prestadorId,
-      },
-    });
-
-    // 4. Retorna a lista de serviços encontrados (pode ser um array vazio).
-    return response.status(200).json(servicos);
+    const { id } = req.params;
+    const servicos = await ListServicesProviderService(id);
+    return res.status(200).json(servicos);
   } catch (error) {
-    console.error("Erro ao listar serviços do prestador:", error);
-    return response.status(500).json({ error: "Erro ao buscar os serviços." });
+    return res
+      .status(500)
+      .json({ error: "Erro ao buscar serviços do prestador" });
   }
 }
-export async function listarMinhasAvaliacoes(request, response) {
+//Listar Minhas Avaliações
+export async function listMyReviews(req, res) {
   try {
-    const clienteId = request.usuario.id;
-
-    const avaliacoesFeitas = await prisma.avaliacao.findMany({
-      where: {
-        clienteId: clienteId,
-      },
-      include: {
-        prestador: {
-          select: {
-            id: true,
-            nome: true,
-            foto_perfil_url: true,
-          },
-        },
-      },
-    });
-
-    return response.status(200).json(avaliacoesFeitas);
+    const clienteId = req.usuario.id;
+    const avaliacoes = await ListMyReviewsService(clienteId);
+    return res.status(200).json(avaliacoes);
   } catch (error) {
     console.error("Erro ao listar minhas avaliações:", error);
-    return response.status(500).json({ error: "Erro ao buscar avaliações." });
+    return res.status(500).json({ error: "Erro ao buscar avaliações." });
   }
 }
 export async function editarUsuario(request, response) {
