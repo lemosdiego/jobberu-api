@@ -5,12 +5,12 @@ import {
   authenticateUser,
   createUser,
   listUsers,
-  editarUsuario,
-  deletarUsuario,
-  listarPrestadoresPorCidade,
   listUsersId,
   listProviderServices,
   listMyReviews,
+  editUser,
+  deleteUser,
+  listProvidersByCity,
 } from "../../usuario/controller/usuario.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 import { validate } from "../../../middlewares/validateRequest.js";
@@ -23,6 +23,7 @@ const router = Router();
 // - 'upload.single()' diz ao Multer para esperar um único arquivo.
 // - "'foto_perfil'" é o nome do campo que o front-end deve usar para enviar o arquivo.
 
+//======Endpoints de Usuário======//
 //! POST /usuario/create
 //! Cria um novo usuário (cliente ou prestador).
 //! Corpo: multipart/form-data com os campos do usuário.
@@ -48,11 +49,6 @@ router.get("/:id/servicos", listProviderServices);
 //! GET /usuario/me/avaliacoes
 //! (🔒 Autenticado) Lista as avaliações feitas pelo usuário logado.
 router.get("/me/avaliacoes", autenticacao, listMyReviews);
-
-//! GET /usuario/:id/servicos
-//! Lista os serviços de um prestador específico.
-router.get("/:id/servicos", listProviderServices);
-
 //! PATCH /usuario/atualizar/:id
 //! (🔒 Autenticado) Atualiza o perfil do próprio usuário.
 //! Corpo: multipart/form-data com os campos a serem atualizados.
@@ -60,16 +56,14 @@ router.patch(
   "/atualizar/:id",
   autenticacao,
   upload.single("foto_perfil"),
-  editarUsuario
+  editUser
 );
-
 //! DELETE /usuario/excluir/:id
 //! (🔒 Autenticado) Deleta o perfil do próprio usuário.
-router.delete("/excluir/:id", autenticacao, deletarUsuario);
-
+router.delete("/excluir/:id", autenticacao, deleteUser);
 //! GET /usuario/prestadores/:cidade
 //! Lista todos os prestadores de uma cidade específica.
 //! Parâmetro: :cidade (nome da cidade).
-router.get("/prestadores/cidade/:cidade", listarPrestadoresPorCidade);
+router.get("/prestadores/cidade/:cidade", listProvidersByCity);
 
 export default router;
