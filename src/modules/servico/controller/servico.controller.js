@@ -1,7 +1,8 @@
 import carregarNoCloudinary from "../../../lib/cloudinary.js";
 import prisma from "../../../lib/prisma.js";
 
-export async function criarServico(request, response) {
+// Criar um novo serviço
+export async function createService(request, response) {
   try {
     // Verifica permissão, apenas usuários que são prestadores podem criar serviços
     if (!request.usuario.is_prestador) {
@@ -47,7 +48,8 @@ export async function criarServico(request, response) {
     return response.status(500).json({ mensagem: "Erro ao criar serviço" });
   }
 }
-export async function listarServicos(request, response) {
+// Listar todos os serviços
+export async function listService(request, response) {
   try {
     const servicos = await prisma.servico.findMany();
     return response.status(200).json(servicos);
@@ -56,7 +58,8 @@ export async function listarServicos(request, response) {
     return response.status(500).json({ mensagem: "Erro ao listar serviços" });
   }
 }
-export async function listarServicoId(request, response) {
+// Listar serviço por ID
+export async function listServiceId(request, response) {
   try {
     const { id } = request.params;
     const servico = await prisma.servico.findUnique({
@@ -81,7 +84,8 @@ export async function listarServicoId(request, response) {
     return response.status(500).json({ mensagem: "Erro ao listar serviço" });
   }
 }
-export async function editarServico(request, response) {
+// Editar um serviço existente
+export async function editService(request, response) {
   try {
     if (!request.usuario.is_prestador) {
       return response
@@ -171,7 +175,8 @@ export async function editarServico(request, response) {
       .json({ mensagem: "Erro interno ao editar o serviço." });
   }
 }
-export async function deletarServico(request, response) {
+// Deletar um serviço
+export async function deleteService(request, response) {
   try {
     // verificar tipo por segurança
     if (!request.usuario.is_prestador) {

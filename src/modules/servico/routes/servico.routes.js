@@ -2,11 +2,11 @@ import { Router } from "express";
 import multer from "multer";
 import multerConfig from "../../../lib/multer.js";
 import {
-  criarServico,
-  listarServicos,
-  editarServico,
-  listarServicoId,
-  deletarServico,
+  createService,
+  listService,
+  listServiceId,
+  editService,
+  deleteService,
 } from "../controller/servico.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 
@@ -17,21 +17,21 @@ router.post(
   "/create",
   autenticacao,
   upload.array("imagens_servico", 5),
-  criarServico
+  createService
 );
-router.get("/", listarServicos);
-router.get("/:id", listarServicoId); // Rota para buscar um serviço específico
+router.get("/", listService);
+router.get("/:id", listServiceId); // Rota para buscar um serviço específico
 router.patch(
   "/atualizar/:id",
   autenticacao,
   upload.array("imagens", 5), // <-- ADICIONE O MIDDLEWARE MULTER AQUI
-  editarServico
+  editService
 );
 router.delete(
   "/excluir/:id",
   autenticacao,
   // upload.array("imagens_servico", 5), // Remova esta linha
-  deletarServico
+  deleteService
 );
 
 export default router;
