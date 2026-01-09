@@ -1,5 +1,8 @@
-import carregarNoCloudinary from "../../../lib/cloudinary.js";
-import prisma from "../../../lib/prisma.js";
+import CreateServiceService from "../services/CreateServiceService.js";
+import ListServiceService from "../services/ListServiceService.js";
+import ListServiceIdService from "../services/ListServiceIdService.js";
+import EditServiceService from "../services/EditServiceService.js";
+import DeleteServiceService from "../services/DeleteServiceService.js";
 
 // Criar um novo serviço
 export async function createService(request, response) {
@@ -10,36 +13,12 @@ export async function createService(request, response) {
         .status(403)
         .json({ mensagem: "Apenas prestadores podem criar serviços" });
     }
-    //coleta todos os dados que precisamos para fazer a requisição
-    const { titulo, descricao, categoria, preco } = request.body;
-    const imagensServico = request.files;
-    const prestadorId = request.usuario.id;
-    // indica para o cloudnary que vai ser um array de imagens
-    let imagensUrl = [];
 
-    if (imagensServico && imagensServico.length > 0) {
-      // cria uma promessa para cada upload de imagem no cloudinary
-      const uploadPromises = imagensServico.map((file) =>
-        carregarNoCloudinary(file.path, "imagens_servicos")
-      );
-      // aguarda todas as promessas serem resolvidas
-      const resolveUrls = await Promise.all(uploadPromises);
-      imagensUrl = resolveUrls;
-    }
-    // Monda o objeto de dados do serviço para salvar no banco
-    const dadosServico = {
-      titulo,
-      descricao,
-      categoria,
-      imagens: imagensUrl,
-      prestadorId: prestadorId,
-    };
-    // Converte o preço para número
-    if (preco) {
-      dadosServico.preco = parseFloat(preco);
-    }
-    // Cria o serviço no banco de dados
-    const novoServico = await prisma.servico.create({ data: dadosServico });
+    const novoServico = await CreateServiceService(
+      request.body,
+      request.files,
+      request.usuario.id
+    );
     // Retorna sucesso
     return response.status(201).json(novoServico);
   } catch (erro) {
@@ -51,7 +30,7 @@ export async function createService(request, response) {
 // Listar todos os serviços
 export async function listService(request, response) {
   try {
-    const servicos = await prisma.servico.findMany();
+    const servicos = await ListServiceService();
     return response.status(200).json(servicos);
   } catch (erro) {
     console.error("Erro ao listar serviços:", erro);
@@ -62,24 +41,12 @@ export async function listService(request, response) {
 export async function listServiceId(request, response) {
   try {
     const { id } = request.params;
-    const servico = await prisma.servico.findUnique({
-      where: { id: parseInt(id, 10) },
-      include: {
-        prestador: {
-          select: {
-            id: true,
-            nome: true,
-            foto_perfil_url: true,
-            // outros campos públicos do prestador que queira expor
-          },
-        },
-      },
-    });
-    if (!servico) {
-      return response.status(404).json({ mensagem: "Serviço não encontrado" });
-    }
+    const servico = await ListServiceIdService(id);
     return response.status(200).json(servico);
   } catch (erro) {
+    if (erro.message === "Serviço não encontrado") {
+      return response.status(404).json({ mensagem: erro.message });
+    }
     console.error("Erro ao listar serviço:", erro);
     return response.status(500).json({ mensagem: "Erro ao listar serviço" });
   }
@@ -93,82 +60,24 @@ export async function editService(request, response) {
         .json({ mensagem: "Apenas prestadores podem editar serviços." });
     }
 
-    const servicoId = parseInt(request.params.id, 10);
-    const prestadorId = request.usuario.id;
-    const novosDados = request.body;
-    const novasImagensFiles = request.files; // Arquivos do multer
-
-    // 1. VERIFICAÇÃO DE AUTORIZAÇÃO
-    const servicoExistente = await prisma.servico.findUnique({
-      where: { id: servicoId },
-    });
-
-    if (!servicoExistente) {
-      return response.status(404).json({ mensagem: "Serviço não encontrado." });
-    }
-
-    if (servicoExistente.prestadorId !== prestadorId) {
-      return response
-        .status(403)
-        .json({ mensagem: "Você não tem permissão para editar este serviço." });
-    }
-
-    // 2. PROCESSAMENTO E CONVERSÃO DOS DADOS
-    const dadosParaAtualizar = {
-      titulo: novosDados.titulo,
-      descricao: novosDados.descricao,
-      categoria: novosDados.categoria,
-    };
-
-    // --- CORREÇÃO AQUI ---
-    // Converte 'preco' de string para número, se ele existir.
-    if (
-      novosDados.preco !== undefined &&
-      novosDados.preco !== null &&
-      novosDados.preco !== ""
-    ) {
-      const precoNumerico = parseFloat(novosDados.preco);
-      if (isNaN(precoNumerico)) {
-        return response
-          .status(400)
-          .json({ mensagem: "O preço fornecido é inválido." });
-      }
-      dadosParaAtualizar.preco = precoNumerico;
-    }
-
-    // 3. LÓGICA DE ATUALIZAÇÃO DE IMAGENS
-    let imagensFinais = servicoExistente.imagens || [];
-
-    // Remove imagens marcadas para exclusão
-    if (novosDados.imagens_a_remover) {
-      const urlsParaRemover = Array.isArray(novosDados.imagens_a_remover)
-        ? novosDados.imagens_a_remover
-        : [novosDados.imagens_a_remover];
-
-      imagensFinais = imagensFinais.filter(
-        (imgUrl) => !urlsParaRemover.includes(imgUrl)
-      );
-    }
-
-    // Adiciona novas imagens
-    if (novasImagensFiles && novasImagensFiles.length > 0) {
-      const uploadPromises = novasImagensFiles.map((file) =>
-        carregarNoCloudinary(file.path, "imagens_servicos")
-      );
-      const novasUrls = await Promise.all(uploadPromises);
-      imagensFinais.push(...novasUrls);
-    }
-
-    dadosParaAtualizar.imagens = imagensFinais;
-
-    // 4. ATUALIZAÇÃO NO BANCO
-    const servicoAtualizado = await prisma.servico.update({
-      where: { id: servicoId },
-      data: dadosParaAtualizar,
-    });
-
+    const servicoAtualizado = await EditServiceService(
+      request.params.id,
+      request.usuario.id,
+      request.body,
+      request.files
+    );
     return response.status(200).json(servicoAtualizado);
   } catch (erro) {
+    if (erro.message === "Serviço não encontrado.") {
+      return response.status(404).json({ mensagem: erro.message });
+    }
+    if (erro.message === "Você não tem permissão para editar este serviço.") {
+      return response.status(403).json({ mensagem: erro.message });
+    }
+    if (erro.message === "O preço fornecido é inválido.") {
+      return response.status(400).json({ mensagem: erro.message });
+    }
+
     console.error("ERRO DETALHADO AO EDITAR SERVIÇO:", erro);
     return response
       .status(500)
@@ -184,28 +93,16 @@ export async function deleteService(request, response) {
         .status(403)
         .json({ mensagem: "Apenas prestadores podem deletar serviços" });
     }
-    //coleta os ids de serviço e prestador logado
-    const servicoId = parseInt(request.params.id, 10);
-    const prestadorId = request.usuario.id;
 
-    // verifica se o serviço pertence ao prestador logdo
-    const servico = await prisma.servico.findUnique({
-      where: { id: servicoId },
-    });
-    // se o serviço nao existir
-    if (!servico) {
-      return response.status(404).json({ mensagem: "Serviço não encontrado." });
-    }
-    // verifica se o prestador é o mesmo do usuario logado
-    if (servico.prestadorId !== prestadorId) {
-      return response
-        .status(403)
-        .json({ mensagem: "Prestador não autorizado a deletar este serviço." });
-    }
-    // se todos os testes passarem, deleta o serviço
-    await prisma.servico.delete({ where: { id: servicoId } });
+    await DeleteServiceService(request.params.id, request.usuario.id);
     return response.status(204).send(); // 204 No Content é a resposta padrão para delete.
   } catch (erro) {
+    if (erro.message === "Serviço não encontrado.") {
+      return response.status(404).json({ mensagem: erro.message });
+    }
+    if (erro.message === "Prestador não autorizado a deletar este serviço.") {
+      return response.status(403).json({ mensagem: erro.message });
+    }
     console.error("Erro ao deletar serviço:", erro);
     return response.status(500).json({ mensagem: "Erro ao deletar serviço" });
   }

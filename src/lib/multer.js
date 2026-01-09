@@ -49,6 +49,6 @@ export default {
 
   // Limite de tamanho do arquivo (ex: 2MB).
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB em bytes
+    fileSize: 5 * 1024 * 1024, // 2MB em bytes
   },
 };
