@@ -27,7 +27,12 @@ export async function criarAvaliacao(request, response) {
         .json({ mensagem: "Esse serviço nao pode ser avaliado" });
     }
     //VERIFICA DE JA EXISTE UMA AVALIAÇÃO PARA ESSE REGISTRO, GARANTINDO QUE O MESMO NAO AVALIE DUAS VEZES
-    if (registro.avaliacao) {
+    //Verificação robusta: suporta tanto objeto (1:1) quanto array (1:N) para evitar bugs futuros
+    const jaAvaliado = Array.isArray(registro.avaliacao)
+      ? registro.avaliacao.length > 0
+      : registro.avaliacao;
+
+    if (jaAvaliado) {
       return response
         .status(409)
         .json({ mensagem: "Este serviço ja foi avaliado" });
@@ -67,6 +72,31 @@ export async function criarAvaliacao(request, response) {
   } catch (error) {
     console.error("Erro ao criar avaliação:", error);
     return response.status(500).json({ mensagem: "Erro ao criar avaliação." });
+  }
+}
+
+export async function listarAvaliacoes(request, response) {
+  try {
+    const clienteId = request.usuario.id;
+
+    const avaliacoes = await prisma.avaliacao.findMany({
+      where: { clienteId: clienteId },
+      include: {
+        prestador: {
+          select: {
+            nome: true,
+          },
+        },
+        registro: true, // Inclui os dados do serviço (status, id, etc) para o front conferir
+      },
+    });
+
+    return response.status(200).json(avaliacoes);
+  } catch (error) {
+    console.error("Erro ao listar avaliações:", error);
+    return response
+      .status(500)
+      .json({ mensagem: "Erro ao listar avaliações." });
   }
 }
 
@@ -139,5 +169,42 @@ export async function deletarAvaliacao(request, response) {
     return response
       .status(500)
       .json({ mensagem: "Erro ao deletar avaliação." });
+  }
+}
+
+export async function verificarDisponibilidade(request, response) {
+  try {
+    const clienteId = request.usuario.id;
+    const { prestadorId } = request.query;
+
+    if (!prestadorId) {
+      return response
+        .status(400)
+        .json({ mensagem: "O ID do prestador é obrigatório." });
+    }
+
+    // Busca se existe algum registro CONCLUIDO entre as partes que ainda NÃO tem avaliação
+    const registroPendente = await prisma.registroServico.findFirst({
+      where: {
+        clienteId: clienteId,
+        prestadorId: parseInt(prestadorId, 10),
+        status: "CONCLUIDO",
+        avaliacao: null, // Verifica se a relação de avaliação não existe (é nula)
+      },
+      select: {
+        id: true, // Só precisamos do ID para criar a avaliação depois
+      },
+    });
+
+    if (registroPendente) {
+      return response
+        .status(200)
+        .json({ disponivel: true, registroId: registroPendente.id });
+    }
+
+    return response.status(200).json({ disponivel: false });
+  } catch (error) {
+    console.error("Erro ao verificar disponibilidade:", error);
+    return response.status(500).json({ mensagem: "Erro interno." });
   }
 }
