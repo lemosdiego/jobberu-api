@@ -9,6 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: always
 
   app:
     build: .
@@ -16,6 +17,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+    command: npm run dev
     ports:
       - "3000:3000"
     env_file:

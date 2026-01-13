@@ -39,6 +39,10 @@ model Usuario {
   aprovado        Boolean  @default(false) // MODERAÇÃO: Usuário precisa ser aprovado.
   data_criacao    DateTime @default(now())
 
+  // Campos para Verificação de E-mail (Cadastro)
+  email_verificado Boolean @default(false)
+  token_verificacao String? // Código curto (ex: 123456) para validar o cadastro
+
   // Campos para Recuperação de Senha
   token_recuperacao String?
   token_expiracao   DateTime?
