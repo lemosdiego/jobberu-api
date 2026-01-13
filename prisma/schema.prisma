@@ -39,6 +39,10 @@ model Usuario {
   aprovado        Boolean  @default(false) // MODERAÇÃO: Usuário precisa ser aprovado.
   data_criacao    DateTime @default(now())
 
+  // Campos para Recuperação de Senha
+  token_recuperacao String?
+  token_expiracao   DateTime?
+
   // --- CAMPOS DE GAMIFICAÇÃO ---
   nivel_cliente   String   @default("Iniciante")
   nivel_prestador String   @default("Iniciante")
