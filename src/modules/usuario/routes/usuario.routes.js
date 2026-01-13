@@ -2,7 +2,6 @@ import { Router } from "express";
 import multer from "multer";
 import multerConfig from "../../../lib/multer.js";
 import {
-  authenticateUser,
   createUser,
   listUsers,
   listUsersId,
@@ -33,10 +32,7 @@ router.post(
   validate(criarUsuarioSchema),
   createUser
 );
-//! POST /usuario/login
-//! Autentica um usuário e retorna um token.
-//! Corpo: JSON com { email, senha }.
-router.post("/login", authenticateUser);
+
 //! GET /usuario
 //! Lista todos os usuários.
 router.get("/", listUsers);
