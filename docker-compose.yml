@@ -17,13 +17,14 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    command: npm run dev
     ports:
       - "3000:3000"
+      - "80:3000"
     env_file:
       - .env
     depends_on:
       - db
+    restart: always
 
 volumes:
   pgdata:

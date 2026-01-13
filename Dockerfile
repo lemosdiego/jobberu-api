@@ -8,7 +8,7 @@ RUN npm install
 COPY prisma ./prisma
 COPY . .
 
-# RUN npm install -g nodemon
+
 
 RUN DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public" npx prisma generate
 
