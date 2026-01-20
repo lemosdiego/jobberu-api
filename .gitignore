@@ -3,3 +3,4 @@
 # Arquivo de variáveis de ambiente - NUNCA ENVIAR PARA O GITHUB
 .env
 /tmp
+/DEPLOY.md
