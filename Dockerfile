@@ -1,17 +1,28 @@
-FROM node:20
+# Estágio 1: Build
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
+
+# Instala dependências
 RUN npm install
 
-COPY prisma ./prisma
+# Gera o cliente do Prisma
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+# Estágio 2: Produção
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copia apenas o necessário do estágio de build
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
 COPY . .
 
-
-
-RUN DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public" npx prisma generate
-
+# Define a porta e o comando de produção (sem nodemon)
+ENV PORT=3000
 EXPOSE 3000
-
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+CMD ["npm", "start"]

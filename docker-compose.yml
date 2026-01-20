@@ -9,7 +9,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    restart: always
 
   app:
     build: .
@@ -17,14 +16,15 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - /app/node_modules
     ports:
       - "3000:3000"
-      - "80:3000"
     env_file:
       - .env
     depends_on:
       - db
-    restart: always
+    # Sobrescreve o comando do Dockerfile para usar o modo DEV (nodemon)
+    command: npm run dev
 
 volumes:
   pgdata:
