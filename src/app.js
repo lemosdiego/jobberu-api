@@ -10,6 +10,7 @@ import authenticationRouter from "./modules/authentication/routes/authentication
 const app = express();
 app.use(cors());
 app.use(express.json());
+
 app.use("/usuario", usuarioRouter);
 app.use("/servico", servicoRouter);
 app.use("/avaliacao", avaliacaoRouter);

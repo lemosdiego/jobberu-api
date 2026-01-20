@@ -22,6 +22,9 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY . .
 
+# Cria a pasta temporária para uploads (evita erro no Multer)
+RUN mkdir -p tmp
+
 # Define a porta e o comando de produção (sem nodemon)
 ENV PORT=3000
 EXPOSE 3000
