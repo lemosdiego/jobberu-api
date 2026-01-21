@@ -130,3 +130,65 @@ Endpoints marcados com `🔒` requerem um Token de Autenticação (`Authorizatio
 | `POST`   | `/avaliacao/create` | Cria uma avaliação vinculada a um `RegistroServico`. | `🔒`         |
 | `PATCH`  | `/avaliacao/:id`    | Edita uma avaliação própria.                         | `🔒`         |
 | `DELETE` | `/avaliacao/:id`    | Deleta uma avaliação própria.                        | `🔒`         |
+
+---
+
+## 7. Infraestrutura e Decisões de Deploy
+
+Para garantir que a JobberU seja escalável, segura e financeiramente viável desde o primeiro dia, adotamos uma arquitetura **Serverless** e baseada em **Containers**.
+
+### Escolha das Plataformas
+
+1.  **Google Cloud Run (Aplicação):**
+    - **Decisão:** Opttei pelo Cloud Run para rodar nossa API containerizada (Docker).
+    - **Por que?** Ele abstrai a complexidade de servidores (infraestrutura gerenciada), escala automaticamente conforme a demanda (Scale-to-Zero) e oferece segurança robusta com HTTPS nativo. Isso permite focar 100% na regra de negócio.
+
+2.  **Neon Tech (Banco de Dados):**
+    - **Decisão:** PostgreSQL Serverless.
+    - **Por que?** O Neon separa computação de armazenamento. Isso significa custos reduzidos em momentos de inatividade e escalabilidade instantânea em picos de acesso, alinhando-se perfeitamente com a arquitetura do Cloud Run.
+
+3.  **Cloudinary (Gestão de Mídia):**
+    - **Decisão:** CDN e Armazenamento de Imagens.
+    - **Por que?** Em ambientes containerizados efêmeros, não devemos salvar arquivos no disco local. O Cloudinary resolve isso gerenciando uploads, otimização automática e entrega rápida de imagens.
+
+### Operação e Manutenção
+
+O projeto conta com um fluxo de deploy documentado e padronizado. Para detalhes técnicos, comandos de CLI e procedimentos de atualização de banco de dados, consulte o nosso **Manual de Operações (DEPLOY.md)**.
+
+---
+
+## 8. Conclusão
+
+O desenvolvimento da API JobberU foi estruturado para simular um ambiente real de startup de alta performance.
+
+Não se tratou apenas de escrever código, mas de orquestrar um ecossistema:
+
+- Modelagem de dados complexa com Prisma.
+- Segurança e Autenticação com JWT.
+- Integração de serviços em nuvem.
+- Containerização e Deploy em Produção.
+
+> "Com isso, pude realmente ter uma ideia clara e colocar em prática conceitos avançados de engenharia de software, garantindo assim o fluxo completo de um desenvolvimento: da arquitetura à produção."
+
+---
+
+## 9. Visão de Futuro e Próximos Passos
+
+O lançamento do MVP é apenas o primeiro passo na jornada da JobberU. O verdadeiro desafio é transformar uma ideia promissora em um serviço real que impacte positivamente a vida das pessoas, construindo um ecossistema de confiança e oportunidade.
+
+Nossos próximos objetivos estão focados em evoluir a plataforma de forma sustentável, aprimorando o código para se tornar cada vez mais funcional e profissional, e aprendendo na prática com a implementação de novas funcionalidades.
+
+### Roadmap de Desenvolvimento
+
+1.  **Próxima Atualização (Foco em Engajamento):**
+    - **Módulo de Favoritos:** Permitir que clientes salvem seus prestadores preferidos para facilitar a recontratação e fortalecer o relacionamento na plataforma.
+    - **Avaliação Invertida:** Implementar a funcionalidade para que prestadores também possam avaliar os clientes após um serviço concluído, criando um sistema de reputação 360º e incentivando o bom comportamento de ambas as partes.
+
+2.  **Evolução da Plataforma (Foco em Gestão e Escalabilidade):**
+    - **Módulo de Administração:** Desenvolver um painel de controle dedicado para administradores. Este módulo será crucial para a moderação de conteúdo (aprovação de perfis, fotos e avaliações), gerenciamento de usuários e visualização de métricas da plataforma.
+
+3.  **Visão de Longo Prazo (Foco em Monetização e Ecossistema):**
+    - **Integração de Pagamentos:** Implementar um sistema de pagamentos seguro dentro da plataforma, oferecendo mais conveniência e segurança para transações.
+    - **Carteira Digital (Wallet):** Criar uma carteira interna onde usuários (clientes e prestadores) possam gerenciar seus saldos, facilitando pagamentos e recebimentos de forma instantânea.
+
+Este roadmap guiará nosso desenvolvimento, garantindo que cada nova funcionalidade agregue valor real ao nosso ecossistema e nos aproxime da nossa missão de simplificar a contratação de serviços locais.
