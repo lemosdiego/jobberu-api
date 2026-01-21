@@ -186,6 +186,7 @@ Nossos próximos objetivos estão focados em evoluir a plataforma de forma suste
 
 2.  **Evolução da Plataforma (Foco em Gestão e Escalabilidade):**
     - **Módulo de Administração:** Desenvolver um painel de controle dedicado para administradores. Este módulo será crucial para a moderação de conteúdo (aprovação de perfis, fotos e avaliações), gerenciamento de usuários e visualização de métricas da plataforma.
+    - **Testes Automatizados:** Implementar testes unitários e de integração (Jest/Supertest) para garantir a estabilidade do sistema e prevenir regressões a cada nova funcionalidade, elevando o padrão de qualidade do código.
 
 3.  **Visão de Longo Prazo (Foco em Monetização e Ecossistema):**
     - **Integração de Pagamentos:** Implementar um sistema de pagamentos seguro dentro da plataforma, oferecendo mais conveniência e segurança para transações.
