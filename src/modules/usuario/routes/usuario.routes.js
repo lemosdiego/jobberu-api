@@ -11,6 +11,10 @@ import {
   deleteUser,
   listProvidersByCity,
 } from "../../usuario/controller/usuario.controller.js";
+import {
+  requestPasswordReset,
+  resetPassword,
+} from "../../authentication/controller/authentication.controller.js";
 import autenticacao from "../../../middlewares/autenticacao.js";
 import { validate } from "../../../middlewares/validateRequest.js";
 import { criarUsuarioSchema } from "../schemas/usuario.schema.js";
@@ -30,7 +34,7 @@ router.post(
   "/create",
   upload.single("foto_perfil"),
   validate(criarUsuarioSchema),
-  createUser
+  createUser,
 );
 
 //! GET /usuario
@@ -52,7 +56,7 @@ router.patch(
   "/atualizar/:id",
   autenticacao,
   upload.single("foto_perfil"),
-  editUser
+  editUser,
 );
 //! DELETE /usuario/excluir/:id
 //! (🔒 Autenticado) Deleta o perfil do próprio usuário.
@@ -61,5 +65,13 @@ router.delete("/excluir/:id", autenticacao, deleteUser);
 //! Lista todos os prestadores de uma cidade específica.
 //! Parâmetro: :cidade (nome da cidade).
 router.get("/prestadores/cidade/:cidade", listProvidersByCity);
+
+//! POST /usuario/recuperar-senha
+//! Solicita o envio do link de recuperação.
+router.post("/recuperar-senha", requestPasswordReset);
+
+//! POST /usuario/redefinir-senha
+//! Efetiva a troca da senha usando o token.
+router.post("/redefinir-senha", resetPassword);
 
 export default router;

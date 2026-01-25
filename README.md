@@ -106,6 +106,8 @@ Endpoints marcados com `🔒` requerem um Token de Autenticação (`Authorizatio
 | `GET`    | `/usuario/prestadores/cidade/:cidade` | Lista prestadores de uma cidade específica.      | Pública      |
 | `PATCH`  | `/usuario/atualizar/:id`              | Permite que um usuário edite seu próprio perfil. | `🔒`         |
 | `DELETE` | `/usuario/excluir/:id`                | Permite que um usuário delete sua própria conta. | `🔒`         |
+| `POST`   | `/usuario/recuperar-senha`            | Solicita o envio de e-mail para troca de senha.  | Pública      |
+| `POST`   | `/usuario/redefinir-senha`            | Define uma nova senha usando um token válido.    | Pública      |
 
 ### Módulo de Serviço
 

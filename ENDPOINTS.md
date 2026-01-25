@@ -25,6 +25,8 @@ Endpoints marcados com `🔒` requerem um Token de Autenticação.
 | `GET`    | `/usuario/me/avaliacoes`              | Lista as avaliações feitas pelo usuário logado. | `🔒`         |
 | `PATCH`  | `/usuario/atualizar/:id`              | Atualiza os dados do próprio perfil.            | `🔒`         |
 | `DELETE` | `/usuario/excluir/:id`                | Deleta o próprio perfil.                        | `🔒`         |
+| `POST`   | `/usuario/recuperar-senha`            | Solicita link de recuperação de senha.          | Pública      |
+| `POST`   | `/usuario/redefinir-senha`            | Redefine a senha usando o token recebido.       | Pública      |
 
 ---
 
@@ -52,6 +54,22 @@ Endpoints marcados com `🔒` requerem um Token de Autenticação.
 - **Exemplos:**
   - Busca por cidade: `/usuario/prestadores/cidade/santo-andre`
   - Busca por cidade e categoria: `/usuario/prestadores/cidade/santo-andre?categoria=jardinagem`
+
+---
+
+#### `POST /usuario/recuperar-senha`
+
+- **Cenário de Uso:** O usuário esqueceu sua senha e solicita um link de redefinição via e-mail.
+- **Corpo (JSON):** `{ "email": "usuario@exemplo.com" }`
+- **Comportamento:** Gera um token temporário (1h) e envia um e-mail com o link para o Front-end.
+- **Segurança:** Retorna sempre `200 OK` com uma mensagem genérica para evitar a enumeração de usuários por hackers.
+
+#### `POST /usuario/redefinir-senha`
+
+- **Cenário de Uso:** O usuário clicou no link do e-mail, acessou a página de redefinição e enviou a nova senha.
+- **Corpo (JSON):** `{ "token": "TOKEN_RECEBIDO_NA_URL", "novaSenha": "nova-senha-segura" }`
+- **Resposta de Sucesso:** `{ "message": "Senha alterada com sucesso." }`
+- **Erros Comuns:** Token inválido ou expirado.
 
 ---
 
